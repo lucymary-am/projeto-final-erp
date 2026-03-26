@@ -1,4 +1,5 @@
 export enum Perfil {
-  GESTAO,
-  SOLICITANTE
+SOLICITANTE,
+GESTOR,
+COMPRADOR
 }

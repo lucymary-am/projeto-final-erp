@@ -1,9 +1,18 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+
+import { Categoria } from "./Categoria.js";
 
 @Entity('produto')
 export class Produto {
   @PrimaryGeneratedColumn('uuid')
-  id_prod!: string;
+  id_prod!: number;
 
   @Column({ type: 'varchar', nullable: false })
   nome!: string;
@@ -28,6 +37,15 @@ export class Produto {
   @Column({ type: 'int', nullable: true })
   estoque_maximo!: number | null;
 
+  @ManyToOne(() => Categoria, (categoria) => categoria.produtos)
+  categoria!: Categoria;
+
   @Column({ type: 'boolean', default: true })
   ativo!: boolean;
+
+  @CreateDateColumn()
+  created_at!: Date;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
 }
