@@ -1,0 +1,44 @@
+<main class="app-layout">
+  <aside class="sidebar">
+    <div>
+      <img src="/logo.png" alt="Orbis" class="sidebar-logo" />
+      <h2>Menu principal</h2>
+      <ul>
+        <li routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          Dashboard
+        </li>
+        <li routerLink="/clientes" routerLinkActive="active">Clientes</li>
+        <li routerLink="/produtos" routerLinkActive="active">Produtos</li>
+        <li routerLink="/categorias" routerLinkActive="active">Categorias</li>
+        <li routerLink="/financeiro" routerLinkActive="active">Financeiro</li>
+      </ul>
+    </div>
+
+    <div
+      class="user-panel"
+      role="button"
+      tabindex="0"
+      (click)="toggleUserMenu(); $event.stopPropagation()"
+      (keydown.enter)="toggleUserMenu()"
+      (keydown.space)="toggleUserMenu(); $event.preventDefault()"
+    >
+      <div class="avatar">{{ userInitials }}</div>
+      <div>
+        <p class="name">{{ currentUser.nome }}</p>
+        <p class="role">{{ currentUser.perfil }}</p>
+      </div>
+
+      @if (userMenuOpen()) {
+        <div class="user-menu" (click)="$event.stopPropagation()">
+          <button type="button" (click)="logout($event)" [disabled]="logoutLoading()">
+            {{ logoutLoading() ? 'Encerrando...' : 'Encerrar sessao' }}
+          </button>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <section class="content-area">
+    <router-outlet></router-outlet>
+  </section>
+</main>

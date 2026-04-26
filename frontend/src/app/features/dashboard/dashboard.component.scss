@@ -1,0 +1,36 @@
+.dashboard-page {
+  min-height: calc(100vh - 36px);
+}
+
+.content {
+  padding: 2px;
+}
+
+header h1 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e2e5ec;
+  border-radius: 12px;
+  padding: 18px;
+
+  h3 {
+    margin: 0 0 10px;
+    color: #798294;
+    font-size: 13px;
+  }
+
+  strong {
+    font-size: 30px;
+    color: #202939;
+  }
+}

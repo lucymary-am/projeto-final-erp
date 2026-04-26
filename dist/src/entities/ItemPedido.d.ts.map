@@ -1,0 +1,1 @@
+{"version":3,"file":"ItemPedido.d.ts","sourceRoot":"","sources":["../../../src/entities/ItemPedido.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,aAAa,CAAC;AAC1C,OAAO,EAAE,OAAO,EAAE,MAAM,cAAc,CAAC;AAEvC,qBACa,UAAU;IAErB,EAAE,EAAG,MAAM,CAAC;IAGZ,MAAM,EAAG,MAAM,CAAC;IAGhB,OAAO,EAAG,OAAO,CAAC;IAGlB,UAAU,EAAG,MAAM,CAAC;IAGpB,cAAc,EAAG,MAAM,CAAC;CACzB"}

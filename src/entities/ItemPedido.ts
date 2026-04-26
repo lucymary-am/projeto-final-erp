@@ -4,7 +4,7 @@ import {
   Column,
   ManyToOne,
 } from "typeorm";
-import { Pedido } from "./Pedido.js";
+import type { Pedido } from "./Pedido.js";
 import { Produto } from "./Produto.js";
 
 @Entity("item_pedido")
@@ -12,7 +12,7 @@ export class ItemPedido {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => Pedido, (pedido) => pedido.itens)
+  @ManyToOne("Pedido", (pedido: Pedido) => pedido.itens)
   pedido!: Pedido;
 
   @ManyToOne(() => Produto)

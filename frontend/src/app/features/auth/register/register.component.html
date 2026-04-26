@@ -1,0 +1,91 @@
+<main class="register-page">
+  <section class="register-card">
+    <div class="hero-panel"></div>
+
+    <div class="form-panel">
+      <h2>Cadastro</h2>
+
+      <form [formGroup]="registerForm" (ngSubmit)="submit()" class="register-form">
+        <div class="form-fields">
+          <div class="name-grid">
+            <label class="field">
+              <input type="text" formControlName="nome" placeholder="Nome" />
+            </label>
+            <label class="field">
+              <input type="text" formControlName="sobrenome" placeholder="Sobrenome" />
+            </label>
+          </div>
+
+          <label class="field">
+            <input type="email" formControlName="email" placeholder="E-mail" />
+          </label>
+
+          <label class="field">
+            <select formControlName="perfil">
+              @for (perfil of perfis; track perfil.value) {
+                <option [value]="perfil.value">{{ perfil.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field password-field">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="senha"
+              placeholder="Senha"
+            />
+            <button type="button" class="ghost-icon" (click)="togglePasswordVisibility()">
+              {{ showPassword() ? 'Ocultar' : 'Exibir' }}
+            </button>
+          </label>
+
+          <ul class="password-rules">
+            <li>Pelo menos 6 caracteres</li>
+            <li>Letras e simbolos</li>
+          </ul>
+
+          <label class="field password-field">
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmacao"
+              placeholder="Confirmacao"
+            />
+            <button type="button" class="ghost-icon" (click)="toggleConfirmPasswordVisibility()">
+              {{ showConfirmPassword() ? 'Ocultar' : 'Exibir' }}
+            </button>
+          </label>
+
+          <label class="terms">
+            <input type="checkbox" formControlName="termos" />
+            <span>
+              Concordo com os <a href="#" (click)="$event.preventDefault()">Termos de Servico</a> e a
+              <a href="#" (click)="$event.preventDefault()">Politica de Privacidade</a>
+            </span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="primary-btn" type="submit" [disabled]="loading()">
+            {{ loading() ? 'Criando...' : 'Criar Conta' }}
+          </button>
+
+          <p class="signin">Ja tem uma conta? <a routerLink="/login">Entrar</a></p>
+
+          @if (successMessage()) {
+            <p class="success">{{ successMessage() }}</p>
+          }
+          @if (errorMessage()) {
+            <p class="error">{{ errorMessage() }}</p>
+          }
+          @if (validationErrors().length > 0) {
+            <ul class="error-list">
+              @for (message of validationErrors(); track message) {
+                <li>{{ message }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </form>
+    </div>
+  </section>
+</main>

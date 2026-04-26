@@ -1,0 +1,48 @@
+<main class="crud-page">
+  <header class="page-header">
+    <div>
+      <h1>Cadastro de Categorias</h1>
+      <p>Cadastre e visualize categorias de produtos.</p>
+    </div>
+    <a routerLink="/dashboard" class="back-link">Voltar ao dashboard</a>
+  </header>
+
+  <section class="card">
+    <h2>Nova categoria</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <input type="text" formControlName="nome" placeholder="Nome da categoria" />
+      <input type="text" formControlName="descricao" placeholder="Descricao (opcional)" />
+      <button type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Salvando...' : 'Cadastrar categoria' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Categorias cadastradas</h2>
+    @if (loading()) {
+      <p>Carregando categorias...</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Descricao</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (categoria of categorias(); track categoria.id) {
+            <tr>
+              <td>{{ categoria.nome }}</td>
+              <td>{{ categoria.descricao || '-' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="2">Nenhuma categoria cadastrada.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</main>

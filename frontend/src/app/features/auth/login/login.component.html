@@ -1,0 +1,62 @@
+<main class="login-page">
+  <section class="login-card">
+    <header class="brand">
+      <img src="/logo.png" alt="Orbis" class="brand-logo" />
+    </header>
+
+    <form [formGroup]="loginForm" (ngSubmit)="submit()" class="login-form">
+      <label class="field">
+        <input type="email" formControlName="email" placeholder="E-mail" />
+      </label>
+
+      <label class="field password-field">
+        <input
+          [type]="showPassword() ? 'text' : 'password'"
+          formControlName="senha"
+          placeholder="Senha"
+        />
+        <button type="button" class="ghost-icon" (click)="togglePasswordVisibility()">
+          {{ showPassword() ? 'Ocultar' : 'Exibir' }}
+        </button>
+      </label>
+
+      <button class="primary-btn" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <div class="login-options">
+        <label class="remember">
+          <input type="checkbox" formControlName="lembrarMe" />
+          <span>Lembrar-me</span>
+        </label>
+        <a href="#" (click)="$event.preventDefault()">Esqueceu a senha?</a>
+      </div>
+
+      <div class="divider">
+        <span>Ou entre com</span>
+      </div>
+
+      <div class="social-grid">
+        <button type="button" class="social google" [disabled]="loading()" (click)="loginWithGoogle()">
+          G
+        </button>
+        <button type="button" class="social ms" [disabled]="true" title="Em breve">
+          ■
+        </button>
+      </div>
+
+      <p class="signup">Nao tem uma conta? <a routerLink="/cadastro">Cadastre-se</a></p>
+
+      @if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      }
+      @if (validationErrors().length > 0) {
+        <ul class="error-list">
+          @for (message of validationErrors(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      }
+    </form>
+  </section>
+</main>

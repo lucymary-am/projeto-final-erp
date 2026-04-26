@@ -1,0 +1,1 @@
+{"version":3,"file":"ensureRole.d.ts","sourceRoot":"","sources":["../../../src/middlewares/ensureRole.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,SAAS,CAAC;AAE9C,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,oBAAoB,CAAC;AAGjD,eAAO,MAAM,UAAU,GAAI,GAAG,iBAAiB,MAAM,EAAE,KAAG,cAczD,CAAA"}

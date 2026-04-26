@@ -20,18 +20,23 @@ router.get("/", ensureAuth, ensureRole(Perfil.GESTOR), usuarioController.findAll
 const findUserByIdStack = [
   ensureAuth,
   ensureRole(Perfil.GESTOR, Perfil.SOLICITANTE, Perfil.COMPRADOR),
-  validateParams(usuarioIdParamsSchema),
+  validateParams(usuarioIdParamsSchema, { statusCode: 422 }),
   usuarioController.findUserById.bind(usuarioController),
 ] as const;
 
 router.get("/id/:id", ...findUserByIdStack);
 router.get("/:id", ...findUserByIdStack);
-router.post("/", ensureAuth,  validateBody(createUsuarioSchema), usuarioController.createUser.bind(usuarioController) );
+// Cadastro publico para fluxo de criacao de conta no frontend.
+router.post(
+  "/",
+  validateBody(createUsuarioSchema, { statusCode: 422 }),
+  usuarioController.createUser.bind(usuarioController)
+);
 
 const updateUserStack = [
   ensureAuth,
-  validateParams(usuarioIdParamsSchema),
-  validateBody(updateUsuarioSchema),
+  validateParams(usuarioIdParamsSchema, { statusCode: 422 }),
+  validateBody(updateUsuarioSchema, { statusCode: 422 }),
   usuarioController.updateUser.bind(usuarioController),
 ] as const;
 
@@ -41,7 +46,7 @@ router.put("/:id", ...updateUserStack);
 const deleteUserStack = [
   ensureAuth,
   ensureRole(Perfil.GESTOR),
-  validateParams(usuarioIdParamsSchema),
+  validateParams(usuarioIdParamsSchema, { statusCode: 422 }),
   usuarioController.deleteUser.bind(usuarioController),
 ] as const;
 
