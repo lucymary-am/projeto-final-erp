@@ -31,7 +31,13 @@ export const permissions: PermissionMap = {
     [Perfil.COMPRADOR]: ["read"],
   },
 
-    movimentacao: {
+  cliente: {
+    [Perfil.GESTOR]: ["create", "read", "update", "delete"],
+    [Perfil.SOLICITANTE]: ["read"],
+    [Perfil.COMPRADOR]: ["read"],
+  },
+
+  movimentacao: {
     [Perfil.GESTOR]: ["create", "read", "update", "delete"],
     [Perfil.SOLICITANTE]: ["create", "read"],
     [Perfil.COMPRADOR]: ["create", "read"],

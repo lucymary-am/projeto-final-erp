@@ -1,54 +1,58 @@
-import { Request, Response } from "express";
-import { ClienteService } from "../services/ClienteService.js";
+import type { Request, Response } from "express";
+import type { ClienteService, CreateClienteDTO, UpdateClienteDTO } from "../services/ClienteService.js";
+import { AppError } from "../errors/AppErrors.js";
 
-export class ClienteController {
-private clienteService = new ClienteService();
+export default class ClienteController {
+  private clienteService: ClienteService;
 
-async create(req: Request, res: Response): Promise<Response> {
-try {
-    const cliente = await this.clienteService.create(req.body);
+  constructor(clienteService: ClienteService) {
+    this.clienteService = clienteService;
+  }
+
+  async createCliente(req: Request, res: Response) {
+    const cliente = await this.clienteService.createCliente(req.body as CreateClienteDTO);
     return res.status(201).json(cliente);
-} catch (error: any) {
-    return res.status(400).json({ message: error.message });
-}
-}
+  }
 
-async findAll(req: Request, res: Response): Promise<Response> {
-try {
+  async findAllCliente(_req: Request, res: Response) {
     const clientes = await this.clienteService.findAll();
     return res.status(200).json(clientes);
-} catch (error: any) {
-    return res.status(500).json({ message: error.message });
-}
-}
+  }
 
-async findById(req: Request, res: Response): Promise<Response> {
-try {
+  async findClienteById(req: Request, res: Response) {
     const id = Number(req.params.id);
-    const cliente = await this.clienteService.findById(id);
+
+    if (Number.isNaN(id)) {
+      throw new AppError("ID invalido", 400);
+    }
+
+    const cliente = await this.clienteService.getById(id);
+    if (!cliente) {
+      throw new AppError("Cliente nao encontrado!", 404);
+    }
+
     return res.status(200).json(cliente);
-} catch (error: any) {
-    return res.status(404).json({ message: error.message });
-}
-}
+  }
 
-async update(req: Request, res: Response): Promise<Response> {
-try {
+  async updateCliente(req: Request, res: Response) {
     const id = Number(req.params.id);
-    const clienteAtualizado = await this.clienteService.update(id, req.body);
+
+    if (Number.isNaN(id)) {
+      throw new AppError("ID invalido", 400);
+    }
+
+    const clienteAtualizado = await this.clienteService.updateCliente(id, req.body as UpdateClienteDTO);
     return res.status(200).json(clienteAtualizado);
-} catch (error: any) {
-    return res.status(400).json({ message: error.message });
-}
-}
+  }
 
-async delete(req: Request, res: Response): Promise<Response> {
-try {
+  async deleteCliente(req: Request, res: Response) {
     const id = Number(req.params.id);
-    await this.clienteService.delete(id);
+
+    if (Number.isNaN(id)) {
+      throw new AppError("ID invalido", 400);
+    }
+
+    await this.clienteService.deleteCliente(id);
     return res.status(204).send();
-} catch (error: any) {
-    return res.status(404).json({ message: error.message });
-}
-}
+  }
 }

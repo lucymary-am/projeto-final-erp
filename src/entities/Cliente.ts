@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
-import { Pedido } from "./Pedido.js";
+import type { Pedido } from "./Pedido.js";
 
 @Entity("cliente")
 export class Cliente {
@@ -18,6 +18,6 @@ export class Cliente {
   @Column({ type: "varchar", nullable: true })
   telefone?: string;
 
-  @OneToMany(() => Pedido, (pedido) => pedido.cliente)
+  @OneToMany("Pedido", (pedido: Pedido) => pedido.cliente)
   pedidos!: Pedido[];
 }

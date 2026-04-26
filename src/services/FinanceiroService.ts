@@ -1,13 +1,16 @@
-import z from "zod";
-import { appDataSource } from "../database/appDataSource.js";
+import type { DataSource, Repository } from "typeorm";
 import { Financeiro, TipoFinanceiro, StatusFinanceiro } from "../entities/Financeiro.js";
 import { AppError } from "../errors/AppErrors.js";
+import type { CreateFinanceiroDTO, UpdateFinanceiroDTO } from "../dtos/FinanceiroDTO.js";
 
 export class FinanceiroService {
-  private financeiroRepository = appDataSource.getRepository(Financeiro);
+  private financeiroRepository: Repository<Financeiro>;
 
-  async create(data: Partial<Financeiro>): Promise<Financeiro> {
-    //validação
+  constructor(dataSource: DataSource) {
+    this.financeiroRepository = dataSource.getRepository(Financeiro);
+  }
+
+  async createFinanceiro(data: CreateFinanceiroDTO) {
     if (!data.tipo || !Object.values(TipoFinanceiro).includes(data.tipo)) {
       throw new AppError("Tipo inválido", 400);
     }
@@ -18,12 +21,12 @@ export class FinanceiroService {
 
     if (!data.tipo || !data.descricao || !data.valor || !data.data_vencimento) {
       throw new AppError("Campos obrigatórios não informados", 400);
-}
+    }
 
     const financeiro = this.financeiroRepository.create({
       tipo: data.tipo,
       descricao: data.descricao,
-      valor: z.coerce.number().parse(data.valor),
+      valor: Number(data.valor),
       status: data.status ?? StatusFinanceiro.PENDENTE,
       data_vencimento: data.data_vencimento,
       ...(data.data_pagamento && { data_pagamento: data.data_pagamento }),
@@ -32,11 +35,11 @@ export class FinanceiroService {
     return await this.financeiroRepository.save(financeiro);
   }
 
-  async findAll(): Promise<Financeiro[]> {
+  async findAll() {
     return await this.financeiroRepository.find();
   }
 
-  async findById(id: string): Promise<Financeiro> {
+  async findById(id: string) {
     if (!id) {
       throw new AppError("ID inválido", 400);
     }
@@ -52,10 +55,9 @@ export class FinanceiroService {
     return financeiro;
   }
 
-  async update(id: string, data: Partial<Financeiro>): Promise<Financeiro> {
+  async updateFinanceiro(id: string, data: UpdateFinanceiroDTO) {
     const financeiro = await this.findById(id);
 
-    // valida enum
     if (data.tipo && !Object.values(TipoFinanceiro).includes(data.tipo)) {
       throw new AppError("Tipo inválido", 400);
     }
@@ -69,16 +71,15 @@ export class FinanceiroService {
     return await this.financeiroRepository.save(financeiro);
   }
 
-    async delete(id: string): Promise<void> {
+  async deleteFinanceiro(id: string) {
     const result = await this.financeiroRepository.delete(id);
 
     if (result.affected === 0) {
-        throw new AppError("Registro não encontrado", 404);
+      throw new AppError("Registro não encontrado", 404);
     }
-    }
+  }
 
-  // método importante (ERP real)
-  async pagar(id: string): Promise<Financeiro> {
+  async pagarFinanceiro(id: string) {
     const financeiro = await this.findById(id);
 
     if (financeiro.status === StatusFinanceiro.PAGO) {

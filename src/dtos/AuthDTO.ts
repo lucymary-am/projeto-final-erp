@@ -11,6 +11,11 @@ export const refreshSchema = z.object({
 
 export const logoutSchema = refreshSchema;
 
+export const googleAuthSchema = z.object({
+    credential: z.string().min(10)
+});
+
 export type LoginDTO = z.infer<typeof loginSchema>;
 export type RefreshDTO = z.infer<typeof refreshSchema>;
 export type LogoutDTO = z.infer<typeof logoutSchema>;
+export type GoogleAuthDTO = z.infer<typeof googleAuthSchema>;

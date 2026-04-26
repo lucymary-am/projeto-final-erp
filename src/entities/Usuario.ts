@@ -1,6 +1,6 @@
 import { Column, Entity, CreateDateColumn, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Perfil } from '../types/Perfil.js';
-import { Pedido } from './Pedido.js';
+import type { Pedido } from './Pedido.js';
 import { Sessao } from "./Sessao.js";
 
 @Entity('usuario')
@@ -23,7 +23,7 @@ export class Usuario {
   @Column({ type: 'boolean', default: true })
   ativo!: boolean;
 
-  @OneToMany(() => Pedido, (pedido) => pedido.usuario)
+  @OneToMany("Pedido", (pedido: Pedido) => pedido.usuario)
   pedidos!: Pedido[];
 
   @OneToMany(() => Sessao, (s) => s.usuario)

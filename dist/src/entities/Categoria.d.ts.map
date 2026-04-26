@@ -1,0 +1,1 @@
+{"version":3,"file":"Categoria.d.ts","sourceRoot":"","sources":["../../../src/entities/Categoria.ts"],"names":[],"mappings":"AAQA,OAAO,EAAE,OAAO,EAAE,MAAM,cAAc,CAAC;AAEvC,qBACa,SAAS;IAEpB,EAAE,EAAG,MAAM,CAAC;IAGZ,IAAI,EAAG,MAAM,CAAC;IAGd,SAAS,CAAC,EAAE,MAAM,CAAC;IAGnB,QAAQ,EAAG,OAAO,EAAE,CAAC;IAGrB,UAAU,EAAG,IAAI,CAAC;IAGlB,UAAU,EAAG,IAAI,CAAC;CACnB"}
