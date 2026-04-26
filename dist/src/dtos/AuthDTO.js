@@ -7,4 +7,7 @@ export const refreshSchema = z.object({
     refreshToken: z.string().min(10)
 });
 export const logoutSchema = refreshSchema;
+export const googleAuthSchema = z.object({
+    credential: z.string().min(10)
+});
 //# sourceMappingURL=AuthDTO.js.map

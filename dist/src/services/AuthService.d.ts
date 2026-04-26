@@ -5,12 +5,22 @@ export type UsuarioAuthPublico = Pick<Usuario, "id_user" | "nome" | "email" | "p
 export declare class AuthService {
     private userRepo;
     private sessionRepo;
+    private googleClient;
     constructor(dataSource: DataSource);
     private hashToken;
     private gerarAccessToken;
     private gerarRefreshToken;
     private toUsuarioPublico;
+    private criarSessaoAutenticada;
     login(email: string, senha: string, meta?: {
+        ip?: string;
+        userAgent?: string;
+    }): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        usuario: UsuarioAuthPublico;
+    }>;
+    loginWithGoogle(credential: string, meta?: {
         ip?: string;
         userAgent?: string;
     }): Promise<{
