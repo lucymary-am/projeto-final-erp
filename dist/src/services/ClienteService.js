@@ -1,63 +1,63 @@
-import { appDataSource } from "../database/appDataSource.js";
 import { Cliente } from "../entities/Cliente.js";
+import { AppError } from "../errors/AppErrors.js";
 export class ClienteService {
-    clienteRepository = appDataSource.getRepository(Cliente);
-    async create(data) {
-        const clienteExistente = await this.clienteRepository.findOne({
-            where: { cpf_cnpj: data.cpf_cnpj }
+    clienteRepository;
+    constructor(dataSource) {
+        this.clienteRepository = dataSource.getRepository(Cliente);
+    }
+    async getById(id) {
+        return await this.clienteRepository.findOne({
+            where: { id },
+            relations: { pedidos: true },
         });
+    }
+    async findAll() {
+        return await this.clienteRepository.find({
+            relations: { pedidos: true },
+        });
+    }
+    async getByCpfCnpj(cpfCnpj) {
+        return await this.clienteRepository.findOne({
+            where: { cpf_cnpj: cpfCnpj },
+        });
+    }
+    async createCliente(data) {
+        const clienteExistente = await this.getByCpfCnpj(data.cpf_cnpj);
         if (clienteExistente) {
-            throw new Error("Já existe um cliente com esse CPF/CNPJ.");
+            throw new AppError("CPF/CNPJ ja cadastrado!", 409);
         }
         const cliente = this.clienteRepository.create({
             nome: data.nome,
             cpf_cnpj: data.cpf_cnpj,
             email: data.email,
-            telefone: data.telefone
+            telefone: data.telefone,
         });
         return await this.clienteRepository.save(cliente);
     }
-    async findAll() {
-        return await this.clienteRepository.find({
-            relations: ["pedidos"]
-        });
-    }
-    async findById(id) {
-        const cliente = await this.clienteRepository.findOne({
-            where: { id },
-            relations: ["pedidos"]
-        });
+    async updateCliente(id, data) {
+        const cliente = await this.getById(id);
         if (!cliente) {
-            throw new Error("Cliente não encontrado.");
-        }
-        return cliente;
-    }
-    async update(id, data) {
-        const cliente = await this.clienteRepository.findOne({
-            where: { id }
-        });
-        if (!cliente) {
-            throw new Error("Cliente não encontrado.");
+            throw new AppError("Cliente nao encontrado!", 404);
         }
         if (data.cpf_cnpj && data.cpf_cnpj !== cliente.cpf_cnpj) {
-            const cpfCnpjExistente = await this.clienteRepository.findOne({
-                where: { cpf_cnpj: data.cpf_cnpj }
-            });
-            if (cpfCnpjExistente) {
-                throw new Error("Já existe outro cliente com esse CPF/CNPJ.");
+            const cpfCnpjEmUso = await this.getByCpfCnpj(data.cpf_cnpj);
+            if (cpfCnpjEmUso) {
+                throw new AppError("CPF/CNPJ ja cadastrado!", 409);
             }
         }
-        this.clienteRepository.merge(cliente, data);
+        Object.assign(cliente, {
+            nome: data.nome ?? cliente.nome,
+            cpf_cnpj: data.cpf_cnpj ?? cliente.cpf_cnpj,
+            email: data.email ?? cliente.email,
+            telefone: data.telefone ?? cliente.telefone,
+        });
         return await this.clienteRepository.save(cliente);
     }
-    async delete(id) {
-        const cliente = await this.clienteRepository.findOne({
-            where: { id }
-        });
-        if (!cliente) {
-            throw new Error("Cliente não encontrado.");
+    async deleteCliente(id) {
+        const result = await this.clienteRepository.delete(id);
+        if (result.affected === 0) {
+            throw new AppError("Cliente nao encontrado!", 404);
         }
-        await this.clienteRepository.remove(cliente);
     }
 }
 //# sourceMappingURL=ClienteService.js.map

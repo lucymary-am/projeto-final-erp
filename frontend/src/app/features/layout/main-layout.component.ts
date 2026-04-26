@@ -30,6 +30,25 @@ export class MainLayoutComponent {
     return `${first}${second}`.toUpperCase();
   }
 
+  protected get userProfileLabel(): string {
+    const rawProfile = String(this.currentUser.perfil ?? '').trim();
+    if (!rawProfile) {
+      return 'Perfil';
+    }
+
+    const profileMap: Record<string, string> = {
+      '0': 'Solicitante',
+      '1': 'Gestor',
+      '2': 'Comprador',
+      SOLICITANTE: 'Solicitante',
+      GESTOR: 'Gestor',
+      COMPRADOR: 'Comprador'
+    };
+
+    const normalizedProfile = rawProfile.toUpperCase();
+    return profileMap[rawProfile] ?? profileMap[normalizedProfile] ?? rawProfile;
+  }
+
   protected toggleUserMenu(): void {
     this.userMenuOpen.update((value) => !value);
   }
@@ -64,12 +83,12 @@ export class MainLayoutComponent {
         return fallbackUser;
       }
 
-      const parsedUser = JSON.parse(rawUser) as Partial<UsuarioAuth>;
+      const parsedUser = JSON.parse(rawUser) as Partial<UsuarioAuth> & { role?: string };
       return {
         id_user: parsedUser.id_user ?? '',
         nome: parsedUser.nome ?? fallbackUser.nome,
         email: parsedUser.email ?? '',
-        perfil: parsedUser.perfil ?? fallbackUser.perfil
+        perfil: parsedUser.perfil ?? parsedUser.role ?? fallbackUser.perfil
       };
     } catch {
       return fallbackUser;

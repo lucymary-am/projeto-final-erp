@@ -1,10 +1,12 @@
-import { Request, Response } from "express";
-export declare class ClienteController {
+import type { Request, Response } from "express";
+import type { ClienteService } from "../services/ClienteService.js";
+export default class ClienteController {
     private clienteService;
-    create(req: Request, res: Response): Promise<Response>;
-    findAll(req: Request, res: Response): Promise<Response>;
-    findById(req: Request, res: Response): Promise<Response>;
-    update(req: Request, res: Response): Promise<Response>;
-    delete(req: Request, res: Response): Promise<Response>;
+    constructor(clienteService: ClienteService);
+    createCliente(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    findAllCliente(_req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    findClienteById(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    updateCliente(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    deleteCliente(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 }
 //# sourceMappingURL=ClienteController.d.ts.map

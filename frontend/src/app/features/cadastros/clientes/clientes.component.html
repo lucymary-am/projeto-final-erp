@@ -4,21 +4,11 @@
       <h1>Cadastro de Clientes</h1>
       <p>Gerencie os clientes conforme API de backend.</p>
     </div>
-    <a routerLink="/dashboard" class="back-link">Voltar ao dashboard</a>
+    <div class="header-actions">
+      <button type="button" class="primary-btn" (click)="openCreateModal()">+ Adicionar cliente</button>
+      <a routerLink="/dashboard" class="back-link">Voltar ao dashboard</a>
+    </div>
   </header>
-
-  <section class="card">
-    <h2>Novo cliente</h2>
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
-      <input type="text" formControlName="nome" placeholder="Nome" />
-      <input type="text" formControlName="cpf_cnpj" placeholder="CPF/CNPJ" />
-      <input type="email" formControlName="email" placeholder="E-mail" />
-      <input type="text" formControlName="telefone" placeholder="Telefone" />
-      <button type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Salvando...' : 'Cadastrar cliente' }}
-      </button>
-    </form>
-  </section>
 
   <section class="card">
     <h2>Clientes cadastrados</h2>
@@ -32,6 +22,7 @@
             <th>CPF/CNPJ</th>
             <th>E-mail</th>
             <th>Telefone</th>
+            <th>Acao</th>
           </tr>
         </thead>
         <tbody>
@@ -41,14 +32,45 @@
               <td>{{ cliente.cpf_cnpj }}</td>
               <td>{{ cliente.email || '-' }}</td>
               <td>{{ cliente.telefone || '-' }}</td>
+              <td>
+                <div class="row-actions">
+                  <button type="button" class="icon-btn" (click)="openEditModal(cliente)">Editar</button>
+                  <button type="button" class="icon-btn danger" (click)="deleteCliente(cliente)">Excluir</button>
+                </div>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="4">Nenhum cliente cadastrado.</td>
+              <td colspan="5">Nenhum cliente cadastrado.</td>
             </tr>
           }
         </tbody>
       </table>
     }
   </section>
+
+  @if (modalOpen()) {
+    <div class="modal-overlay">
+      <section class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h2>{{ isEditing ? 'Editar cliente' : 'Adicionar novo cliente' }}</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">x</button>
+        </header>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+          <input type="text" formControlName="nome" placeholder="Nome" />
+          <input type="text" formControlName="cpf_cnpj" placeholder="CPF/CNPJ" />
+          <input type="email" formControlName="email" placeholder="E-mail" />
+          <input type="text" formControlName="telefone" placeholder="Telefone" />
+
+          <div class="modal-footer">
+            <button type="button" class="secondary-btn" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="primary-btn" [disabled]="submitting()">
+              {{ submitting() ? 'Salvando...' : (isEditing ? 'Salvar alteracoes' : 'Salvar cliente') }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
 </main>

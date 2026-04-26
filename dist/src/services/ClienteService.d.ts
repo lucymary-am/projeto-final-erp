@@ -1,10 +1,20 @@
+import type { DataSource } from "typeorm";
 import { Cliente } from "../entities/Cliente.js";
+export type CreateClienteDTO = {
+    nome: string;
+    cpf_cnpj: string;
+    email?: string;
+    telefone?: string;
+};
+export type UpdateClienteDTO = Partial<CreateClienteDTO>;
 export declare class ClienteService {
     private clienteRepository;
-    create(data: Partial<Cliente>): Promise<Cliente>;
+    constructor(dataSource: DataSource);
+    getById(id: number): Promise<Cliente | null>;
     findAll(): Promise<Cliente[]>;
-    findById(id: number): Promise<Cliente>;
-    update(id: number, data: Partial<Cliente>): Promise<Cliente>;
-    delete(id: number): Promise<void>;
+    getByCpfCnpj(cpfCnpj: string): Promise<Cliente | null>;
+    createCliente(data: CreateClienteDTO): Promise<Cliente[]>;
+    updateCliente(id: number, data: UpdateClienteDTO): Promise<Cliente>;
+    deleteCliente(id: number): Promise<void>;
 }
 //# sourceMappingURL=ClienteService.d.ts.map

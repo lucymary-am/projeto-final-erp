@@ -1,12 +1,15 @@
 import { Router } from "express";
-import { ClienteController } from "../controllers/ClienteController.js";
+import { appDataSource } from "../database/appDataSource.js";
+import ClienteController from "../controllers/ClienteController.js";
+import { ClienteService } from "../services/ClienteService.js";
 import { ensureAuth } from "../middlewares/ensureAuth.js";
 const clienteRoutes = Router();
-const clienteController = new ClienteController();
-clienteRoutes.post("/", ensureAuth, (req, res) => clienteController.create(req, res));
-clienteRoutes.get("/", ensureAuth, (req, res) => clienteController.findAll(req, res));
-clienteRoutes.get("/:id", ensureAuth, (req, res) => clienteController.findById(req, res));
-clienteRoutes.put("/:id", ensureAuth, (req, res) => clienteController.update(req, res));
-clienteRoutes.delete("/:id", ensureAuth, (req, res) => clienteController.delete(req, res));
+const clienteService = new ClienteService(appDataSource);
+const clienteController = new ClienteController(clienteService);
+clienteRoutes.get("/", ensureAuth, clienteController.findAllCliente.bind(clienteController));
+clienteRoutes.get("/:id", ensureAuth, clienteController.findClienteById.bind(clienteController));
+clienteRoutes.post("/", ensureAuth, clienteController.createCliente.bind(clienteController));
+clienteRoutes.put("/:id", ensureAuth, clienteController.updateCliente.bind(clienteController));
+clienteRoutes.delete("/:id", ensureAuth, clienteController.deleteCliente.bind(clienteController));
 export default clienteRoutes;
 //# sourceMappingURL=clienteRoutes.js.map

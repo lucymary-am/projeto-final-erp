@@ -1,11 +1,11 @@
-import z from "zod";
-import { appDataSource } from "../database/appDataSource.js";
 import { Financeiro, TipoFinanceiro, StatusFinanceiro } from "../entities/Financeiro.js";
 import { AppError } from "../errors/AppErrors.js";
 export class FinanceiroService {
-    financeiroRepository = appDataSource.getRepository(Financeiro);
-    async create(data) {
-        //validação
+    financeiroRepository;
+    constructor(dataSource) {
+        this.financeiroRepository = dataSource.getRepository(Financeiro);
+    }
+    async createFinanceiro(data) {
         if (!data.tipo || !Object.values(TipoFinanceiro).includes(data.tipo)) {
             throw new AppError("Tipo inválido", 400);
         }
@@ -18,7 +18,7 @@ export class FinanceiroService {
         const financeiro = this.financeiroRepository.create({
             tipo: data.tipo,
             descricao: data.descricao,
-            valor: z.coerce.number().parse(data.valor),
+            valor: Number(data.valor),
             status: data.status ?? StatusFinanceiro.PENDENTE,
             data_vencimento: data.data_vencimento,
             ...(data.data_pagamento && { data_pagamento: data.data_pagamento }),
@@ -40,9 +40,8 @@ export class FinanceiroService {
         }
         return financeiro;
     }
-    async update(id, data) {
+    async updateFinanceiro(id, data) {
         const financeiro = await this.findById(id);
-        // valida enum
         if (data.tipo && !Object.values(TipoFinanceiro).includes(data.tipo)) {
             throw new AppError("Tipo inválido", 400);
         }
@@ -52,14 +51,13 @@ export class FinanceiroService {
         this.financeiroRepository.merge(financeiro, data);
         return await this.financeiroRepository.save(financeiro);
     }
-    async delete(id) {
+    async deleteFinanceiro(id) {
         const result = await this.financeiroRepository.delete(id);
         if (result.affected === 0) {
             throw new AppError("Registro não encontrado", 404);
         }
     }
-    // método importante (ERP real)
-    async pagar(id) {
+    async pagarFinanceiro(id) {
         const financeiro = await this.findById(id);
         if (financeiro.status === StatusFinanceiro.PAGO) {
             throw new AppError("Já está pago", 400);

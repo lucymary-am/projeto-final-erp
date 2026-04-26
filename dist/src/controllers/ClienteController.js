@@ -1,53 +1,43 @@
-import { ClienteService } from "../services/ClienteService.js";
-export class ClienteController {
-    clienteService = new ClienteService();
-    async create(req, res) {
-        try {
-            const cliente = await this.clienteService.create(req.body);
-            return res.status(201).json(cliente);
-        }
-        catch (error) {
-            return res.status(400).json({ message: error.message });
-        }
+import { AppError } from "../errors/AppErrors.js";
+export default class ClienteController {
+    clienteService;
+    constructor(clienteService) {
+        this.clienteService = clienteService;
     }
-    async findAll(req, res) {
-        try {
-            const clientes = await this.clienteService.findAll();
-            return res.status(200).json(clientes);
-        }
-        catch (error) {
-            return res.status(500).json({ message: error.message });
-        }
+    async createCliente(req, res) {
+        const cliente = await this.clienteService.createCliente(req.body);
+        return res.status(201).json(cliente);
     }
-    async findById(req, res) {
-        try {
-            const id = Number(req.params.id);
-            const cliente = await this.clienteService.findById(id);
-            return res.status(200).json(cliente);
-        }
-        catch (error) {
-            return res.status(404).json({ message: error.message });
-        }
+    async findAllCliente(_req, res) {
+        const clientes = await this.clienteService.findAll();
+        return res.status(200).json(clientes);
     }
-    async update(req, res) {
-        try {
-            const id = Number(req.params.id);
-            const clienteAtualizado = await this.clienteService.update(id, req.body);
-            return res.status(200).json(clienteAtualizado);
+    async findClienteById(req, res) {
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) {
+            throw new AppError("ID invalido", 400);
         }
-        catch (error) {
-            return res.status(400).json({ message: error.message });
+        const cliente = await this.clienteService.getById(id);
+        if (!cliente) {
+            throw new AppError("Cliente nao encontrado!", 404);
         }
+        return res.status(200).json(cliente);
     }
-    async delete(req, res) {
-        try {
-            const id = Number(req.params.id);
-            await this.clienteService.delete(id);
-            return res.status(204).send();
+    async updateCliente(req, res) {
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) {
+            throw new AppError("ID invalido", 400);
         }
-        catch (error) {
-            return res.status(404).json({ message: error.message });
+        const clienteAtualizado = await this.clienteService.updateCliente(id, req.body);
+        return res.status(200).json(clienteAtualizado);
+    }
+    async deleteCliente(req, res) {
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) {
+            throw new AppError("ID invalido", 400);
         }
+        await this.clienteService.deleteCliente(id);
+        return res.status(204).send();
     }
 }
 //# sourceMappingURL=ClienteController.js.map

@@ -1,66 +1,43 @@
-import { Request, Response } from "express";
-import { FinanceiroService } from "../services/FinanceiroService.js";
+import type { Request, Response } from "express";
+import type { FinanceiroService } from "../services/FinanceiroService.js";
+import type { CreateFinanceiroDTO, UpdateFinanceiroDTO } from "../dtos/FinanceiroDTO.js";
 import { AppError } from "../errors/AppErrors.js";
 
-export class FinanceiroController {
+export default class FinanceiroController {
   constructor(private service: FinanceiroService) {}
 
-  async create(req: Request, res: Response) {
-    try {
-      const financeiro = await this.service.create(req.body);
-      return res.status(201).json(financeiro);
-    } catch (error) {
-      return this.handleError(error, res);
-    }
+  async createFinanceiro(req: Request, res: Response) {
+    const financeiro = await this.service.createFinanceiro(req.body as CreateFinanceiroDTO);
+    return res.status(201).json(financeiro);
   }
 
-  async findAll(_req: Request, res: Response) {
+  async findAllFinanceiro(_req: Request, res: Response) {
     const lista = await this.service.findAll();
     return res.json(lista);
   }
 
-  async findById(req: Request, res: Response) {
-    try {
-      const id = this.getIdParam(req);
-
-      const financeiro = await this.service.findById(id);
-      return res.json(financeiro);
-    } catch (error) {
-      return this.handleError(error, res);
-    }
+  async findFinanceiroById(req: Request, res: Response) {
+    const id = this.getIdParam(req);
+    const financeiro = await this.service.findById(id);
+    return res.json(financeiro);
   }
 
-  async update(req: Request, res: Response) {
-    try {
-      const id = this.getIdParam(req);
-
-      const financeiro = await this.service.update(id, req.body);
-      return res.json(financeiro);
-    } catch (error) {
-      return this.handleError(error, res);
-    }
+  async updateFinanceiro(req: Request, res: Response) {
+    const id = this.getIdParam(req);
+    const financeiro = await this.service.updateFinanceiro(id, req.body as UpdateFinanceiroDTO);
+    return res.json(financeiro);
   }
 
-  async pagar(req: Request, res: Response) {
-    try {
-      const id = this.getIdParam(req);
-
-      const financeiro = await this.service.pagar(id);
-      return res.json(financeiro);
-    } catch (error) {
-      return this.handleError(error, res);
-    }
+  async pagarFinanceiro(req: Request, res: Response) {
+    const id = this.getIdParam(req);
+    const financeiro = await this.service.pagarFinanceiro(id);
+    return res.json(financeiro);
   }
 
-  async delete(req: Request, res: Response) {
-    try {
-      const id = this.getIdParam(req);
-
-      await this.service.delete(id);
-      return res.status(204).send();
-    } catch (error) {
-      return this.handleError(error, res);
-    }
+  async deleteFinanceiro(req: Request, res: Response) {
+    const id = this.getIdParam(req);
+    await this.service.deleteFinanceiro(id);
+    return res.status(204).send();
   }
 
   private getIdParam(req: Request): string {
@@ -71,14 +48,5 @@ export class FinanceiroController {
     }
 
     return id;
-  }
-
-  private handleError(error: unknown, res: Response) {
-    if (error instanceof AppError) {
-      return res.status(error.statusCode).json({ message: error.message });
-    }
-
-    console.error(error);
-    return res.status(500).json({ message: "Erro interno" });
   }
 }
