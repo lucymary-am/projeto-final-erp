@@ -39,7 +39,17 @@
     </div>
 
     <div class="navbar-user">
-      <button (click)="logout()" class="btn-logout">Sair</button>
+      <button class="user-trigger" type="button" (click)="toggleMenuUsuario()" [attr.aria-expanded]="menuUsuarioAberto()">
+        <span class="user-avatar">{{ getNomeUsuario().charAt(0) }}</span>
+        <span class="user-info">
+          <strong class="user-name">{{ getNomeUsuario() }}</strong>
+          <small class="user-role">{{ getPerfilUsuario() }}</small>
+        </span>
+      </button>
+
+      <div class="user-menu" *ngIf="menuUsuarioAberto()">
+        <button (click)="logout()" class="btn-logout" type="button">Encerrar sessão</button>
+      </div>
     </div>
   </nav>
 

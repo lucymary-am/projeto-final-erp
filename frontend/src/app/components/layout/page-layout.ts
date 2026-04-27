@@ -18,6 +18,7 @@ export class PageLayoutComponent {
   currentUser = signal<any>(null);
   menuAberto = signal(false);
   menuRecolhido = signal(false);
+  menuUsuarioAberto = signal(false);
 
   constructor(private authService: AuthService, private router: Router) {
     this.currentUser.set(this.authService.getCurrentUser());
@@ -104,5 +105,26 @@ export class PageLayoutComponent {
 
   toggleMenuRecolhido() {
     this.menuRecolhido.set(!this.menuRecolhido());
+  }
+
+  toggleMenuUsuario() {
+    this.menuUsuarioAberto.set(!this.menuUsuarioAberto());
+  }
+
+  getNomeUsuario() {
+    return this.currentUser()?.nome || 'Usuário';
+  }
+
+  getPerfilUsuario() {
+    const perfil = this.currentUser()?.funcao;
+    if (!perfil) {
+      return 'Sem perfil';
+    }
+
+    return perfil
+      .toLowerCase()
+      .split('_')
+      .map((parte: string) => parte.charAt(0).toUpperCase() + parte.slice(1))
+      .join(' ');
   }
 }
