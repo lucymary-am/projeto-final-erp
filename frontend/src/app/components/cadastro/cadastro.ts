@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
-import { PERFIS, type Perfil } from '../../services/profiles';
+import { PERFIS, PERFIL_PADRAO, type Perfil } from '../../services/profiles';
 
 @Component({
   selector: 'app-cadastro',
@@ -14,7 +14,7 @@ import { PERFIS, type Perfil } from '../../services/profiles';
 export class Cadastro {
   nome = signal('');
   email = signal('');
-  perfil = signal<Perfil>('APENAS_VISUALIZACAO');
+  perfil = signal<Perfil>(PERFIL_PADRAO);
   senha = signal('');
   confirmacaoSenha = signal('');
   termosSenha = signal(false);

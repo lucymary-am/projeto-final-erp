@@ -14,19 +14,24 @@ const router = Router();
 const usuarioService = new UsuarioService(appDataSource);
 const usuarioController = new UsuarioController(usuarioService);
 
-router.get("/", ensureAuth, ensureRole(Perfil.GESTOR), usuarioController.findAllUser.bind(usuarioController));
+router.get(
+  "/",
+  ensureAuth,
+  ensureRole(Perfil.ADMINISTRADOR_SISTEMA, Perfil.GERENTE_SUPERVISOR),
+  usuarioController.findAllUser.bind(usuarioController)
+);
 
 /** Mesmos handlers de `/:id`, para clientes que usam `/usuarios/id/<uuid>`. */
 const findUserByIdStack = [
   ensureAuth,
-  ensureRole(Perfil.GESTOR, Perfil.SOLICITANTE, Perfil.COMPRADOR),
+  ensureRole(Perfil.ADMINISTRADOR_SISTEMA, Perfil.GERENTE_SUPERVISOR, Perfil.APENAS_VISUALIZACAO),
   validateParams(usuarioIdParamsSchema),
   usuarioController.findUserById.bind(usuarioController),
 ] as const;
 
 router.get("/id/:id", ...findUserByIdStack);
 router.get("/:id", ...findUserByIdStack);
-router.post("/", ensureAuth,  validateBody(createUsuarioSchema), usuarioController.createUser.bind(usuarioController) );
+router.post("/", validateBody(createUsuarioSchema), usuarioController.createUser.bind(usuarioController));
 
 const updateUserStack = [
   ensureAuth,
@@ -40,7 +45,7 @@ router.put("/:id", ...updateUserStack);
 
 const deleteUserStack = [
   ensureAuth,
-  ensureRole(Perfil.GESTOR),
+  ensureRole(Perfil.ADMINISTRADOR_SISTEMA, Perfil.GERENTE_SUPERVISOR),
   validateParams(usuarioIdParamsSchema),
   usuarioController.deleteUser.bind(usuarioController),
 ] as const;

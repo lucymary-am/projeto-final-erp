@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from './constants';
-import type { Perfil } from './profiles';
+import { perfilFromApi, type Perfil } from './profiles';
 
 export interface Usuario {
   id_user: string;
@@ -37,7 +37,12 @@ export class UsuarioService {
 
   private normalizeUsuario(usuario: Usuario): Usuario {
     const criadoEm = usuario.criadoEm ?? usuario.created_at;
-    return { ...usuario, criadoEm };
+    const perfilNorm = perfilFromApi(usuario.perfil);
+    return {
+      ...usuario,
+      criadoEm,
+      ...(perfilNorm !== undefined ? { perfil: perfilNorm } : {}),
+    };
   }
 
   async listar(): Promise<Usuario[]> {
@@ -51,11 +56,13 @@ export class UsuarioService {
   }
 
   async criar(dados: CreateUsuarioDTO): Promise<Usuario> {
-    return await firstValueFrom(this.http.post<Usuario>(this.apiUrl, dados));
+    const criado = await firstValueFrom(this.http.post<Usuario>(this.apiUrl, dados));
+    return this.normalizeUsuario(criado);
   }
 
   async editar(id: string, dados: UpdateUsuarioDTO): Promise<Usuario> {
-    return await firstValueFrom(this.http.put<Usuario>(`${this.apiUrl}/${id}`, dados));
+    const atualizado = await firstValueFrom(this.http.put<Usuario>(`${this.apiUrl}/${id}`, dados));
+    return this.normalizeUsuario(atualizado);
   }
 
   async excluir(id: string): Promise<void> {

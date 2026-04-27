@@ -7,9 +7,16 @@ import { Usuario } from "../entities/Usuario.js";
 import { Sessao } from "../entities/Sessao.js";
 import { AppError } from "../errors/AppErrors.js";
 import { Perfil } from "../types/Perfil.js";
+import type { PerfilChave } from "../utils/perfil.js";
+import { perfilEnumParaChave } from "../utils/perfil.js";
 
-/** Dados do usuário seguros para resposta de API (sem senha). */
-export type UsuarioAuthPublico = Pick<Usuario, "id_user" | "nome" | "email" | "perfil">;
+/** Resposta de login/refresh: `perfil` como chave string (igual ao frontend `PERFIS`). */
+export type UsuarioAuthPublico = {
+    id_user: string;
+    nome: string;
+    email: string;
+    perfil: PerfilChave;
+};
 
 export class AuthService {
     private userRepo: Repository<Usuario>;
@@ -29,7 +36,7 @@ export class AuthService {
     private gerarAccessToken(usuario: Usuario): string {
         const accessExpiration = process.env.JWT_ACCESS_EXPIRATION || "30m";
         return (jwt.sign as Function)(
-            { sub: usuario.id_user, perfil: usuario.perfil },
+            { sub: usuario.id_user, perfil: perfilEnumParaChave(usuario.perfil) },
             process.env.JWT_ACCESS_SECRET!,
             { expiresIn: accessExpiration }
         );
@@ -49,7 +56,7 @@ export class AuthService {
             id_user: usuario.id_user,
             nome: usuario.nome,
             email: usuario.email,
-            perfil: usuario.perfil,
+            perfil: perfilEnumParaChave(usuario.perfil),
         };
     }
 

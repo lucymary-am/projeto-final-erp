@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { AppError } from "../errors/AppErrors.js";
 import { Perfil } from "../types/Perfil.js";
+import { perfilJwtParaEnum } from "../utils/perfil.js";
 
 declare global {
     namespace Express {
@@ -12,8 +13,10 @@ declare global {
 }
 
 export interface AuthPayload extends JwtPayload {
-    sub: string; // ID do usuário
-    perfil: Perfil; // Perfil do usuário (ex: admin, user)
+    sub: string;
+    /** Depois do `ensureAuth`: sempre número `Perfil` (enum interno). No JWT bruto pode ser string (chave frontend) ou número. */
+    perfil?: Perfil;
+    funcao?: unknown;
 }
 
 const getAccessSecret = () => {
@@ -37,12 +40,18 @@ export const ensureAuth: RequestHandler = (req, _res, next) => {
     }
 
     try {
-        const payload = jwt.verify(token, getAccessSecret()) as JwtPayload;
-        (req as { auth?: JwtPayload }).auth = payload;
+        const payload = jwt.verify(token, getAccessSecret()) as AuthPayload;
+        const rawPerfil = payload.perfil ?? payload.funcao;
+        const perfilEnum = perfilJwtParaEnum(rawPerfil);
+        if (perfilEnum === undefined) {
+            return next(new AppError("Perfil ausente ou invalido no token", 403));
+        }
+        (req as { auth?: AuthPayload }).auth = {
+            ...payload,
+            perfil: perfilEnum,
+        };
         return next();
     } catch {
         return next(new AppError("Token invalido", 401));
     }
-
-    console.log("HEADER:", req.headers.authorization);
 };

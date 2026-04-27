@@ -7,11 +7,12 @@ export function authorize(module: string, action: string) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const user = req.auth;
 
-    if (!user || !user.perfil) {
+    const perfilNum = user?.perfil;
+    if (!user || perfilNum === undefined || perfilNum === null) {
       throw new AppError("Usuário não autenticado", 401);
     }
 
-    const perfil = user.perfil as Perfil;
+    const perfil = perfilNum as Perfil;
 
     const modulePermissions = permissions[module];
 

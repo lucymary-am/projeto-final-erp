@@ -1,13 +1,33 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { UsuarioService, Usuario, CreateUsuarioDTO, UpdateUsuarioDTO } from '../../services/usuario.service';
-import { PERFIS, type Perfil } from '../../services/profiles';
+import {
+  PERFIS,
+  PERFIL_LABELS,
+  PERFIL_PADRAO,
+  perfilChaveOuVazio,
+  perfilEstaDefinido,
+  perfilFromApi,
+  perfilToKeyOrDefault,
+  type Perfil,
+} from '../../services/profiles';
 import { AuthService } from '../../services/auth';
 import { isHandledValidationError } from '../../services/http-error.utils';
+import { MessageService } from '../../services/message.service';
 import { PageLayoutComponent } from '../layout/page-layout';
+
+type UsuarioForm = {
+  id: string;
+  nome: string;
+  email: string;
+  password: string;
+  confirmacaoSenha: string;
+  termosSenha: boolean;
+  perfil: Perfil;
+  isEdicao: boolean;
+};
 
 @Component({
   selector: 'app-usuarios',
@@ -16,15 +36,26 @@ import { PageLayoutComponent } from '../layout/page-layout';
   templateUrl: './usuarios.html',
   styleUrls: ['./usuarios.css'],
 })
-export class UsuariosComponent implements OnInit, OnDestroy {
+export class UsuariosComponent implements OnInit {
   currentUser = signal<any>(null);
 
   usuarios: Usuario[] = [];
   usuariosFiltrados: Usuario[] = [];
-  carregando = false;
-  mostraModal = false;
-  mostraConfirmacao = false;
-  usuarioEmExclusao: string | null = null;
+  loading = signal(false);
+  salvando = signal(false);
+  excluindo = signal(false);
+  errorMessage = signal('');
+  mostraModal = signal(false);
+  modalLiberado = signal(false);
+  cliqueNovoUsuarioArmado = false;
+
+  /** Mesma lista de perfis da tela Criar Conta (cadastro). */
+  /** Opções de perfil: sempre o array canônico `PERFIS` de `profiles.ts`. */
+  readonly perfisCadastro: Perfil[] = [...PERFIS];
+  readonly perfilLabels = PERFIL_LABELS;
+
+  senhaVisivel = signal(false);
+  confirmacaoVisivel = signal(false);
 
   filtros = {
     perfil: '',
@@ -32,22 +63,24 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     busca: '',
   };
 
-  perfisDisponiveis: Perfil[] = [];
-
-  formulario = {
+  formulario = signal<UsuarioForm>({
     id: '',
     nome: '',
     email: '',
     password: '',
-    perfil: 'APENAS_VISUALIZACAO' as Perfil,
+    confirmacaoSenha: '',
+    termosSenha: false,
+    perfil: PERFIL_PADRAO,
     isEdicao: false,
-  };
+  });
 
-  errosFormulario = {
+  errosFormulario = signal({
     nome: '',
     email: '',
     password: '',
-  };
+    confirmacaoSenha: '',
+    termos: '',
+  });
 
   constructor(
     private authService: AuthService,
@@ -58,44 +91,62 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     if (!this.currentUser()) {
       this.router.navigate(['/login']);
     }
-
-    this.perfisDisponiveis = this.getPerfisPermitidosParaCadastro(this.currentUser()?.funcao ?? null);
   }
 
-  private getPerfisPermitidosParaCadastro(perfilAtual: Perfil | null): Perfil[] {
-    if (!perfilAtual) {
-      return ['APENAS_VISUALIZACAO'];
-    }
+  labelPerfil(p: Perfil): string {
+    return this.perfilLabels[p] ?? p;
+  }
 
-    if (perfilAtual === 'ADMINISTRADOR_SISTEMA') {
-      return PERFIS.filter((p) => p !== 'ADMINISTRADOR_SISTEMA');
-    }
+  /** Rótulo amigável; normalização via `perfilFromApi` (`profiles.ts`). */
+  exibirPerfilUsuario(perfil: unknown): string {
+    const key = perfilFromApi(perfil);
+    return key ? this.perfilLabels[key] : '';
+  }
 
-    if (perfilAtual === 'GERENTE_SUPERVISOR') {
-      return ['OPERADOR_ESTOQUE', 'FINANCEIRO_CONTADOR', 'APENAS_VISUALIZACAO'];
-    }
+  classeBadgePerfil(perfil: unknown): string {
+    const key = perfilFromApi(perfil);
+    return key ? `badge-${key.toLowerCase()}` : '';
+  }
 
-    return ['APENAS_VISUALIZACAO'];
+  getSenhaRequisitos() {
+    const s = this.formulario().password;
+    return {
+      tamanho: s.length >= 8,
+      maiuscula: /[A-Z]/.test(s),
+      minuscula: /[a-z]/.test(s),
+      numero: /[0-9]/.test(s),
+      especial: /[^A-Za-z0-9]/.test(s),
+    };
+  }
+
+  private validarSenhaComoCadastro(senha: string): boolean {
+    return (
+      senha.length >= 8 &&
+      /[A-Z]/.test(senha) &&
+      /[a-z]/.test(senha) &&
+      /[0-9]/.test(senha) &&
+      /[^A-Za-z0-9]/.test(senha)
+    );
   }
 
   async ngOnInit() {
     await this.carregarUsuarios();
-  }
-
-  ngOnDestroy() {
+    // Evita clique "vazando" da navegação lateral para o botão de novo usuário.
+    setTimeout(() => this.modalLiberado.set(true), 0);
   }
 
   async carregarUsuarios() {
     try {
-      this.carregando = true;
+      this.loading.set(true);
+      this.errorMessage.set('');
       this.usuarios = await this.usuarioService.listar();
       this.aplicarFiltros();
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
       if (isHandledValidationError(error)) return;
-      alert('Erro ao carregar usuários');
+      this.errorMessage.set('Erro ao carregar usuários');
     } finally {
-      this.carregando = false;
+      this.loading.set(false);
     }
   }
 
@@ -103,7 +154,7 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     let filtrados = [...this.usuarios];
 
     if (this.filtros.perfil) {
-      filtrados = filtrados.filter((u) => (u.perfil ?? '') === this.filtros.perfil);
+      filtrados = filtrados.filter((u) => perfilChaveOuVazio(u.perfil) === this.filtros.perfil);
     }
 
     if (this.filtros.ativo) {
@@ -123,45 +174,74 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     this.usuariosFiltrados = filtrados;
   }
 
-  abrirModal(usuario?: Usuario) {
-    if (usuario) {
-      this.formulario = {
-        id: usuario.id_user,
-        nome: usuario.nome,
-        email: usuario.email,
-        password: '',
-        perfil: (usuario.perfil ?? 'APENAS_VISUALIZACAO') as Perfil,
-        isEdicao: true,
-      };
-    } else {
-      this.formulario = {
-        id: '',
-        nome: '',
-        email: '',
-        password: '',
-        perfil: 'APENAS_VISUALIZACAO' as Perfil,
-        isEdicao: false,
-      };
-    }
-    this.validarFormulario();
-    this.mostraModal = true;
+  prepararAberturaNovoUsuario() {
+    this.cliqueNovoUsuarioArmado = true;
+    setTimeout(() => {
+      this.cliqueNovoUsuarioArmado = false;
+    }, 400);
   }
 
-  fecharModal() {
-    this.mostraModal = false;
-    this.formulario = {
+  abrirNovoUsuario(event?: MouseEvent) {
+    if (!this.modalLiberado() || !this.cliqueNovoUsuarioArmado) {
+      event?.preventDefault();
+      return;
+    }
+    this.cliqueNovoUsuarioArmado = false;
+
+    this.formulario.set({
       id: '',
       nome: '',
       email: '',
       password: '',
-      perfil: 'APENAS_VISUALIZACAO' as Perfil,
+      confirmacaoSenha: '',
+      termosSenha: false,
+      perfil: PERFIL_PADRAO,
       isEdicao: false,
-    };
-    this.errosFormulario = {
+    });
+    this.senhaVisivel.set(false);
+    this.confirmacaoVisivel.set(false);
+    this.validarFormulario();
+    this.mostraModal.set(true);
+  }
+
+  abrirEdicaoUsuario(usuario: Usuario) {
+    this.formulario.set({
+      id: usuario.id_user,
+      nome: usuario.nome,
+      email: usuario.email,
+      password: '',
+      confirmacaoSenha: '',
+      termosSenha: false,
+      perfil: perfilToKeyOrDefault(usuario.perfil),
+      isEdicao: true,
+    });
+    this.senhaVisivel.set(false);
+    this.confirmacaoVisivel.set(false);
+    this.validarFormulario();
+    this.mostraModal.set(true);
+  }
+
+  fecharModal() {
+    this.mostraModal.set(false);
+    this.senhaVisivel.set(false);
+    this.confirmacaoVisivel.set(false);
+    this.formulario.set({
+      id: '',
       nome: '',
       email: '',
       password: '',
-    };
+      confirmacaoSenha: '',
+      termosSenha: false,
+      perfil: PERFIL_PADRAO,
+      isEdicao: false,
+    });
+    this.errosFormulario.set({
+      nome: '',
+      email: '',
+      password: '',
+      confirmacaoSenha: '',
+      termos: '',
+    });
   }
 
   private isNomeValido(nome: string) {
@@ -171,59 +251,107 @@ export class UsuariosComponent implements OnInit, OnDestroy {
   private isEmailValido(email: string) {
     const value = email.trim();
     if (!value) return false;
-    return /^[^\s@]+@[^\s@]+\.com$/i.test(value);
-  }
-
-  private isSenhaValida(senha: string) {
-    const value = senha ?? '';
-    if (value.length < 6) return false;
-    const temMaiuscula = /[A-Z]/.test(value);
-    const temMinuscula = /[a-z]/.test(value);
-    const temEspecial = /[^A-Za-z0-9]/.test(value);
-    return temMaiuscula && temMinuscula && temEspecial;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   validarFormulario() {
-    const nomeOk = this.isNomeValido(this.formulario.nome);
-    const emailOk = this.isEmailValido(this.formulario.email);
-    const senhaOk = this.formulario.isEdicao ? true : this.isSenhaValida(this.formulario.password);
+    const form = this.formulario();
+    const nomeOk = this.isNomeValido(form.nome);
+    const emailOk = this.isEmailValido(form.email);
 
-    this.errosFormulario.nome = nomeOk ? '' : 'Nome é obrigatório.';
-    this.errosFormulario.email = emailOk ? '' : 'Email inválido.';
-    this.errosFormulario.password = senhaOk
-      ? ''
-      : 'Senha deve ter no mínimo 6 caracteres e conter: 1 letra maiúscula, 1 letra minúscula e 1 caractere especial.';
+    let passwordErr = '';
+    let confirmacaoErr = '';
+    let termosErr = '';
+
+    if (!form.isEdicao) {
+      passwordErr = this.validarSenhaComoCadastro(form.password)
+        ? ''
+        : 'A senha não atende aos requisitos mínimos.';
+      if (form.password !== form.confirmacaoSenha) {
+        confirmacaoErr = 'As senhas não correspondem.';
+      }
+      if (!form.termosSenha) {
+        termosErr = 'Aceite os Termos de Serviço e a Política de Privacidade.';
+      }
+    }
+
+    this.errosFormulario.set({
+      nome: nomeOk ? '' : 'Nome é obrigatório.',
+      email: emailOk ? '' : 'Email inválido.',
+      password: passwordErr,
+      confirmacaoSenha: confirmacaoErr,
+      termos: termosErr,
+    });
   }
 
   formularioValido() {
     this.validarFormulario();
-    return !this.errosFormulario.nome && !this.errosFormulario.email && !this.errosFormulario.password;
+    const erros = this.errosFormulario();
+    const baseOk = !erros.nome && !erros.email;
+    const form = this.formulario();
+    if (form.isEdicao) {
+      return baseOk && perfilEstaDefinido(form.perfil);
+    }
+    return (
+      baseOk &&
+      perfilEstaDefinido(form.perfil) &&
+      !erros.password &&
+      !erros.confirmacaoSenha &&
+      !erros.termos
+    );
+  }
+
+  atualizarCampo<K extends keyof UsuarioForm>(campo: K, valor: UsuarioForm[K]) {
+    const atual = this.formulario();
+    this.formulario.set({ ...atual, [campo]: valor });
+  }
+
+  onPerfilChange(val: string) {
+    this.atualizarCampo('perfil', val as Perfil);
+    this.validarFormulario();
   }
 
   async salvarUsuario() {
+    const form = this.formulario();
     try {
-      if (!this.formularioValido() || !this.formulario.perfil) {
-        alert('Verifique os campos do formulário.');
+      if (!this.formularioValido() || !perfilEstaDefinido(form.perfil)) {
+        await MessageService.validationError('Verifique os campos do formulário.');
         return;
       }
 
-      if (this.formulario.isEdicao) {
+      const perfilSalvar = perfilToKeyOrDefault(form.perfil);
+
+      if (!form.isEdicao && form.password !== form.confirmacaoSenha) {
+        await MessageService.validationError('As senhas não correspondem.');
+        return;
+      }
+
+      if (!form.isEdicao && !form.termosSenha) {
+        await MessageService.validationError(
+          'Você deve aceitar os Termos de Serviço e Política de Privacidade.'
+        );
+        return;
+      }
+
+      this.salvando.set(true);
+
+      if (form.isEdicao) {
         const dados: UpdateUsuarioDTO = {
-          nome: this.formulario.nome,
-          email: this.formulario.email,
-          perfil: this.formulario.perfil,
+          nome: form.nome,
+          email: form.email,
+          perfil: perfilSalvar,
         };
-        await this.usuarioService.editar(this.formulario.id, dados);
-        alert('Usuário atualizado com sucesso');
+        await this.usuarioService.editar(form.id, dados);
+        await MessageService.success('Usuário atualizado com sucesso');
       } else {
         const dados: CreateUsuarioDTO = {
-          nome: this.formulario.nome,
-          email: this.formulario.email,
-          password: this.formulario.password,
-          perfil: this.formulario.perfil,
+          nome: form.nome,
+          email: form.email,
+          password: form.password,
+          perfil: perfilSalvar,
         };
         await this.usuarioService.criar(dados);
-        alert('Usuário criado com sucesso');
+        await MessageService.success('Usuário criado com sucesso');
       }
 
       this.fecharModal();
@@ -231,42 +359,35 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       if (isHandledValidationError(error)) return;
-      if (error instanceof HttpErrorResponse) {
-        const message = (error.error && (error.error.message || error.error.error)) || error.message;
-        alert(message || 'Erro ao salvar usuário');
-        return;
-      }
-      alert('Erro ao salvar usuário');
+      const message = MessageService.extractErrorMessage(error, 'Erro ao salvar usuário');
+      void MessageService.error(message);
+    } finally {
+      this.salvando.set(false);
     }
   }
 
-  abrirConfirmacaoExclusao(usuarioId: string) {
-    this.usuarioEmExclusao = usuarioId;
-    this.mostraConfirmacao = true;
-  }
-
-  fecharConfirmacao() {
-    this.mostraConfirmacao = false;
-    this.usuarioEmExclusao = null;
-  }
-
-  async confirmarExclusao() {
-    if (!this.usuarioEmExclusao) return;
+  async excluirUsuario(usuarioId: string) {
+    const ok = await MessageService.confirmDelete('Tem certeza que deseja excluir este usuário?');
+    if (!ok) return;
 
     try {
-      await this.usuarioService.excluir(this.usuarioEmExclusao);
-      alert('Usuário excluído com sucesso');
-      this.fecharConfirmacao();
+      this.excluindo.set(true);
+      await this.usuarioService.excluir(usuarioId);
+      await MessageService.success('Usuário excluído com sucesso');
       await this.carregarUsuarios();
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
       if (isHandledValidationError(error)) return;
-      alert('Erro ao excluir usuário');
+      const message = MessageService.extractErrorMessage(error, 'Erro ao excluir usuário');
+      void MessageService.error(message);
+    } finally {
+      this.excluindo.set(false);
     }
   }
 
   async alternarStatus(usuario: Usuario) {
-    alert('Alteração de status não está disponível nesta versão da API.');
+    void usuario;
+    await MessageService.validationError('Alteração de status não está disponível nesta versão da API.');
   }
 
   limparFiltros() {

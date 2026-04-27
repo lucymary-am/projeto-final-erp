@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_URL, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_STORAGE_KEY } from './constants';
-import type { Perfil } from './profiles';
+import { PERFIL_PADRAO, type Perfil } from './profiles';
 import { isHandledValidationError } from './http-error.utils';
 
 export interface User {
@@ -105,10 +105,10 @@ export class AuthService {
       1: 'GERENTE_SUPERVISOR',
       2: 'OPERADOR_ESTOQUE',
       3: 'FINANCEIRO_CONTADOR',
-      4: 'APENAS_VISUALIZACAO',
+      4: PERFIL_PADRAO,
     };
     if (typeof funcao === 'number' && Number.isFinite(funcao)) {
-      return numericMap[funcao] ?? 'APENAS_VISUALIZACAO';
+      return numericMap[funcao] ?? PERFIL_PADRAO;
     }
     const perfil = typeof funcao === 'string' ? funcao.trim().toUpperCase() : '';
     const aliasMap: Record<string, Perfil> = {
@@ -122,11 +122,11 @@ export class AuthService {
       FINANCEIRO: 'FINANCEIRO_CONTADOR',
       CONTADOR: 'FINANCEIRO_CONTADOR',
       FINANCEIRO_CONTADOR: 'FINANCEIRO_CONTADOR',
-      APENAS_VISUALIZACAO: 'APENAS_VISUALIZACAO',
-      VISUALIZACAO: 'APENAS_VISUALIZACAO',
-      LEITOR: 'APENAS_VISUALIZACAO',
+      APENAS_VISUALIZACAO: PERFIL_PADRAO,
+      VISUALIZACAO: PERFIL_PADRAO,
+      LEITOR: PERFIL_PADRAO,
     };
-    return aliasMap[perfil] ?? 'APENAS_VISUALIZACAO';
+    return aliasMap[perfil] ?? PERFIL_PADRAO;
   }
 
   private getErrorMessage(error: unknown) {

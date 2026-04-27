@@ -72,7 +72,7 @@ export class PageLayoutComponent {
 
   podeVerUsuarios() {
     const p = this.perfilAtual();
-    return p === 'ADMINISTRADOR_SISTEMA' || p === 'GERENTE_SUPERVISOR';
+    return p === 'ADMINISTRADOR_SISTEMA';
   }
 
   irParaDashboard() {

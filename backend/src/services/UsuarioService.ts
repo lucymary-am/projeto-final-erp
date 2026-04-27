@@ -31,24 +31,39 @@ export class UsuarioService {
         return await this.userRepo.findOneBy({nome: nome});        
     }
 
-    async createUsuario(userData: CreateUsuarioDTO) {
-        const usuario = await this.getByEmail(userData.email);
-
-    if (usuario) {
-        throw new AppError("Usuario ja cadastrado!", 409);
+    private sanitizeNome(nome: string) {
+        return nome.trim();
     }
 
-    const senha_hash = await hash(userData.password, 10);
+    private sanitizeEmail(email: string) {
+        return email.trim().toLowerCase();
+    }
 
-    const novoUsuario = this.userRepo.create({
-        nome: userData.nome,
-        email: userData.email,
-        senha: senha_hash,
-        perfil: userData.perfil,
-    });
+    async createUsuario(userData: CreateUsuarioDTO) {
+        const nomeSanitizado = this.sanitizeNome(userData.nome);
+        const emailSanitizado = this.sanitizeEmail(userData.email);
 
-    return await this.userRepo.save(novoUsuario);
-}
+        const usuarioMesmoEmail = await this.getByEmail(emailSanitizado);
+        if (usuarioMesmoEmail) {
+            throw new AppError("Email ja cadastrado!", 409);
+        }
+
+        const usuarioMesmoNome = await this.getByNome(nomeSanitizado);
+        if (usuarioMesmoNome) {
+            throw new AppError("Nome de usuario ja cadastrado!", 409);
+        }
+
+        const senha_hash = await hash(userData.password, 10);
+
+        const novoUsuario = this.userRepo.create({
+            nome: nomeSanitizado,
+            email: emailSanitizado,
+            senha: senha_hash,
+            perfil: userData.perfil,
+        });
+
+        return await this.userRepo.save(novoUsuario);
+    }
     async updateUsuario(id: string, userUpdate: UpdateUsuarioDTO) {
         const usuario = await this.getById(id);
 
@@ -56,15 +71,27 @@ export class UsuarioService {
             throw new AppError("Usuario nao encontrado!", 404);
         }
 
-        if (userUpdate.email && userUpdate.email !== usuario.email) {
-            const emailEmUso = await this.getByEmail(userUpdate.email);
-            if (emailEmUso) {
+        const nomeAtualizado = userUpdate.nome ? this.sanitizeNome(userUpdate.nome) : undefined;
+        const emailAtualizado = userUpdate.email ? this.sanitizeEmail(userUpdate.email) : undefined;
+
+        if (emailAtualizado && emailAtualizado !== usuario.email) {
+            const emailEmUso = await this.getByEmail(emailAtualizado);
+            if (emailEmUso && emailEmUso.id_user !== usuario.id_user) {
                 throw new AppError("Email ja cadastrado!", 409);
             }
         }
 
+        if (nomeAtualizado && nomeAtualizado !== usuario.nome) {
+            const nomeEmUso = await this.getByNome(nomeAtualizado);
+            if (nomeEmUso && nomeEmUso.id_user !== usuario.id_user) {
+                throw new AppError("Nome de usuario ja cadastrado!", 409);
+            }
+        }
+
         Object.assign(usuario, {
-            ...userUpdate,            
+            ...userUpdate,
+            nome: nomeAtualizado ?? usuario.nome,
+            email: emailAtualizado ?? usuario.email,
         });
 
         return await this.userRepo.save(usuario);

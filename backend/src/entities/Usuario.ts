@@ -23,7 +23,8 @@ export class Usuario {
   @Column({ type: 'varchar', nullable: true })
   avatar_url!: string | null;
 
-  @Column({ type: 'enum', enum: Perfil, select: false, nullable: false })
+  /** Incluído nas queries por padrão (API precisa serializar perfil). `senha` continua `select: false`. */
+  @Column({ type: 'enum', enum: Perfil, nullable: false })
   perfil!: Perfil;
 
   @Column({ type: 'boolean', default: true })
