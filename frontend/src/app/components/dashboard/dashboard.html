@@ -1,0 +1,64 @@
+<app-page-layout currentPage="dashboard">
+    <div class="page-header">
+      <h1>Bem-vindo, {{ currentUser()?.nome }}</h1>
+      <p class="user-function">{{ currentUser()?.funcao }}</p>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <div class="card-header">
+          <h3>Total de Vendas</h3>
+        </div>
+        <div class="card-value">R$ 45.230,00</div>
+        <p class="card-subtitle">Este mês</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Produtos</h3>
+        </div>
+        <div class="card-value">128</div>
+        <p class="card-subtitle">Em estoque</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Clientes</h3>
+        </div>
+        <div class="card-value">45</div>
+        <p class="card-subtitle">Ativos</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Crescimento</h3>
+        </div>
+        <div class="card-value">15%</div>
+        <p class="card-subtitle">Último período</p>
+      </div>
+    </div>
+
+    <div class="recent-section">
+      <h2>Atividades Recentes</h2>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div class="activity-content">
+            <p>Novo pedido recebido</p>
+            <span class="activity-time">Há 2 horas</span>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-content">
+            <p>Estoque baixo em Produto A</p>
+            <span class="activity-time">Há 4 horas</span>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-content">
+            <p>Novo usuário registrado</p>
+            <span class="activity-time">Há 6 horas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+</app-page-layout>
