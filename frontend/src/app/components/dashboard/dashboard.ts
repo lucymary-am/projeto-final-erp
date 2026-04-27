@@ -21,6 +21,7 @@ import {
   LinearScale,
   Tooltip,
 } from 'chart.js';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { API_URL } from '../../services/constants';
 import { PageLayoutComponent } from '../layout/page-layout';
@@ -48,6 +49,21 @@ type DashboardGraficos = {
   produtosPorCategoria: { categoriaNome: string; quantidade: number }[];
 };
 
+export type StatusEstoqueNivel = 'critico' | 'atencao' | 'estavel';
+
+export type LinhaStatusEstoque = {
+  id: string;
+  nome: string;
+  skuLabel: string;
+  codigo: string;
+  categoriaNome: string;
+  estoqueAtual: number;
+  /** 0–100: atual / máximo (ou denominador sintético se não houver máximo) */
+  barraPct: number;
+  status: StatusEstoqueNivel;
+  iconTintIndex: number;
+};
+
 /**
  * Ordem: primários da UI (navy + ciano de destaque), depois tons que contrastam
  * fortemente entre si e com fundo claro (#f5f7fa / branco dos cards).
@@ -65,7 +81,7 @@ const CORES_PRIMARIAS_CONTRASTE = [
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, PageLayoutComponent],
+  imports: [CommonModule, PageLayoutComponent, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -77,6 +93,8 @@ export class Dashboard {
   errorMessage = signal('');
   resumo = signal<DashboardResumo | null>(null);
   graficos = signal<DashboardGraficos | null>(null);
+  /** Até 5 produtos ativos mais recentemente atualizados */
+  linhasStatusEstoque = signal<LinhaStatusEstoque[]>([]);
 
   vendasCanvas = viewChild<ElementRef<HTMLCanvasElement>>('vendasChart');
   produtosCanvas = viewChild<ElementRef<HTMLCanvasElement>>('produtosChart');
@@ -115,6 +133,8 @@ export class Dashboard {
     });
   }
 
+  readonly packageIconSrc = '/assets/menu/package.png';
+
   formatCrescimento(valor: number | undefined): string {
     const v = valor ?? 0;
     const formatted = new Intl.NumberFormat('pt-BR', {
@@ -123,6 +143,125 @@ export class Dashboard {
     }).format(v);
     const prefix = v > 0 ? '+' : '';
     return `${prefix}${formatted}%`;
+  }
+
+  barraCorClass(status: StatusEstoqueNivel): string {
+    switch (status) {
+      case 'critico':
+        return 'estoque-bar__fill--critico';
+      case 'atencao':
+        return 'estoque-bar__fill--atencao';
+      default:
+        return 'estoque-bar__fill--estavel';
+    }
+  }
+
+  badgeClass(status: StatusEstoqueNivel): string {
+    switch (status) {
+      case 'critico':
+        return 'estoque-badge--critico';
+      case 'atencao':
+        return 'estoque-badge--atencao';
+      default:
+        return 'estoque-badge--estavel';
+    }
+  }
+
+  labelStatus(status: StatusEstoqueNivel): string {
+    switch (status) {
+      case 'critico':
+        return 'Crítico';
+      case 'atencao':
+        return 'Atenção';
+      default:
+        return 'Estável';
+    }
+  }
+
+  iconWrapClass(index: number): string {
+    const i = index % CORES_PRIMARIAS_CONTRASTE.length;
+    return `estoque-prod-icon estoque-prod-icon--t${i}`;
+  }
+
+  private mapProdutosStatusEstoque(sortedRaw: any[]): LinhaStatusEstoque[] {
+    const rows: LinhaStatusEstoque[] = [];
+    let rowIndex = 0;
+    for (const p of sortedRaw) {
+      const ativo = Boolean(p.ativo ?? true);
+      if (!ativo) {
+        continue;
+      }
+      const estoqueAtual = Number(p.estoque_atual ?? 0);
+      const estoqueMinimo = Number(p.estoque_minimo ?? 0);
+      const estoqueMaximo =
+        p.estoque_maximo === null || p.estoque_maximo === undefined
+          ? null
+          : Number(p.estoque_maximo);
+
+      const status = this.calcularStatusEstoque(estoqueAtual, estoqueMinimo, estoqueMaximo);
+      const barraPct = this.calcularPctBarraEstoque(estoqueAtual, estoqueMinimo, estoqueMaximo);
+
+      const id = String(p.id_prod ?? p.id ?? '');
+      const codigo = String(p.codigo ?? '');
+      const nome = String(p.nome ?? '');
+      const categoriaNome = p.categoria?.nome != null ? String(p.categoria.nome) : '—';
+
+      rows.push({
+        id,
+        nome,
+        skuLabel: codigo ? `#SKU - ${codigo}` : '#SKU —',
+        codigo: codigo || '—',
+        categoriaNome,
+        estoqueAtual,
+        barraPct,
+        status,
+        iconTintIndex: rowIndex++,
+      });
+
+      if (rows.length >= 5) {
+        break;
+      }
+    }
+
+    return rows;
+  }
+
+  /**
+   * Crítico: até 20% acima do estoque mínimo (atual ≤ mínimo × 1,2).
+   * Atenção: estoque menor que 50% da média entre mínimo e máximo (sem máximo: média usa só o mínimo).
+   */
+  private calcularStatusEstoque(
+    atual: number,
+    minimo: number,
+    maximo: number | null
+  ): StatusEstoqueNivel {
+    const maxRef =
+      maximo !== null && maximo > 0 ? maximo : minimo;
+    const media = (minimo + maxRef) / 2;
+    const limiteAtencao = 0.5 * media;
+
+    if (minimo > 0 && atual <= minimo * 1.2) {
+      return 'critico';
+    }
+    if (atual < limiteAtencao) {
+      return 'atencao';
+    }
+    return 'estavel';
+  }
+
+  private calcularPctBarraEstoque(
+    atual: number,
+    minimo: number,
+    maximo: number | null
+  ): number {
+    const denom =
+      maximo !== null && maximo > 0
+        ? maximo
+        : Math.max(minimo > 0 ? minimo * 2 : 0, atual, 1);
+    if (denom <= 0) {
+      return 0;
+    }
+    return Math.min(100, Math.round((atual / denom) * 1000) / 10);
   }
 
   private formatBrl(v: number): string {
@@ -247,17 +386,28 @@ export class Dashboard {
     try {
       this.loading.set(true);
       this.errorMessage.set('');
-      const [resumoData, graficosData] = await Promise.all([
+      const [resumoData, graficosData, produtosRaw] = await Promise.all([
         firstValueFrom(this.http.get<DashboardResumo>(`${API_URL}/dashboard/resumo`)),
         firstValueFrom(this.http.get<DashboardGraficos>(`${API_URL}/dashboard/graficos`)),
+        firstValueFrom(this.http.get<any[]>(`${API_URL}/produtos`)),
       ]);
       this.resumo.set(resumoData);
       this.graficos.set(graficosData);
+      const lista = Array.isArray(produtosRaw)
+        ? produtosRaw.filter((p) => Boolean(p.ativo ?? true))
+        : [];
+      lista.sort((a, b) => {
+        const da = a?.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const db = b?.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return db - da;
+      });
+      this.linhasStatusEstoque.set(this.mapProdutosStatusEstoque(lista));
     } catch (e) {
       console.error('Erro ao carregar dashboard:', e);
       this.errorMessage.set('Não foi possível carregar os indicadores.');
       this.resumo.set(null);
       this.graficos.set(null);
+      this.linhasStatusEstoque.set([]);
     } finally {
       this.loading.set(false);
     }

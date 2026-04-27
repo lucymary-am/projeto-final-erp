@@ -27,7 +27,6 @@ declare global {
               width?: string | number;
             }
           ) => void;
-          prompt: () => void;
         };
       };
     };
@@ -47,7 +46,6 @@ export class Login implements AfterViewInit {
   rememberMe = signal(false);
   showError = signal(false);
   errorMessage = signal('');
-  googleButtonReady = signal(false);
 
   constructor(
     private authService: AuthService,
@@ -104,26 +102,9 @@ export class Login implements AfterViewInit {
         shape: 'rectangular',
         width: 320,
       });
-      this.googleButtonReady.set(true);
     };
 
     tryRender();
-  }
-
-  triggerGoogleLogin() {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    const googleApi = window.google?.accounts?.id;
-    if (!googleApi) {
-      this.errorMessage.set('Login com Google indisponivel no momento. Tente novamente.');
-      this.showError.set(true);
-      return;
-    }
-
-    this.showError.set(false);
-    googleApi.prompt();
   }
 
   private async loginWithGoogle(idToken: string) {

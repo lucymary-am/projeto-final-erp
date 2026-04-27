@@ -218,26 +218,6 @@
   min-height: 40px;
 }
 
-.btn-google-fallback {
-  display: block;
-  width: 100%;
-  max-width: 320px;
-  padding: 10px 16px;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f1f1f;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.btn-google-fallback:hover {
-  background: #f7f7f7;
-  border-color: #c4c4c4;
-}
-
 .register-link {
   text-align: center;
   font-size: 13px;

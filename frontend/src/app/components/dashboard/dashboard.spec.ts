@@ -32,10 +32,11 @@ describe('Dashboard', () => {
     const reqs = httpMock.match(
       (req) =>
         req.url.includes(`${API_URL}/dashboard/resumo`) ||
-        req.url.includes(`${API_URL}/dashboard/graficos`)
+        req.url.includes(`${API_URL}/dashboard/graficos`) ||
+        req.url.includes(`${API_URL}/produtos`)
     );
 
-    expect(reqs.length).toBe(2);
+    expect(reqs.length).toBe(3);
 
     const mesesStub = Array.from({ length: 6 }, (_, i) => ({
       labelMes: `m${i}`,
@@ -55,6 +56,8 @@ describe('Dashboard', () => {
           vendasPorMes: mesesStub,
           produtosPorCategoria: [{ categoriaNome: 'Cat', quantidade: 2 }],
         });
+      } else if (req.request.url.includes('/produtos')) {
+        req.flush([]);
       }
     }
 
