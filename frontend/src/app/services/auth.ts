@@ -25,6 +25,10 @@ interface LoginResponse {
   refreshToken: string;
 }
 
+interface GoogleLoginRequest {
+  idToken: string;
+}
+
 interface RefreshResponse {
   usuario: {
     id_user: string;
@@ -153,6 +157,32 @@ export class AuthService {
           email,
           senha: password,
         })
+      );
+
+      const user: User = {
+        id: response.usuario.id_user,
+        nome: response.usuario.nome,
+        sobrenome: '',
+        email: response.usuario.email,
+        funcao: this.mapFuncaoToPerfil(response.usuario.perfil),
+      };
+
+      this.saveSession(user, response.accessToken, response.refreshToken);
+      return { success: true };
+    } catch (error) {
+      if (isHandledValidationError(error)) {
+        return { success: false, handledByInterceptor: true };
+      }
+      return { success: false, message: this.getErrorMessage(error) };
+    }
+  }
+
+  async loginWithGoogle(idToken: string): Promise<AuthActionResult> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<LoginResponse>(`${API_URL}/auth/google`, {
+          idToken,
+        } as GoogleLoginRequest)
       );
 
       const user: User = {

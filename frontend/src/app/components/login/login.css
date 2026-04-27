@@ -202,51 +202,40 @@
 
 .social-login {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 24px;
-}
-
-.btn-social {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
-  color: #333;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
-  text-decoration: none;
+  align-items: center;
+  width: 100%;
 }
 
-.btn-social:hover {
-  border-color: #0073aa;
-  color: #0073aa;
+.google-login-render {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
 }
 
-.btn-social.google {
-  border-color: #ddd;
-}
-
-.btn-social.google:hover {
-  background: #f9f9f9;
-}
-
-.btn-social.microsoft {
-  border-color: #ddd;
-}
-
-.btn-social.microsoft:hover {
-  background: #f9f9f9;
-}
-
-.btn-social span {
+.btn-google-fallback {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 16px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f1f1f;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-google-fallback:hover {
+  background: #f7f7f7;
+  border-color: #c4c4c4;
 }
 
 .register-link {

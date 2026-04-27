@@ -17,6 +17,12 @@ export class Usuario {
   @Column({ type: 'varchar', select: false, nullable: false })
   senha!: string;
 
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  google_id!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  avatar_url!: string | null;
+
   @Column({ type: 'enum', enum: Perfil, select: false, nullable: false })
   perfil!: Perfil;
 

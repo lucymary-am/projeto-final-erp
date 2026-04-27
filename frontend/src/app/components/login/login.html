@@ -72,11 +72,13 @@
     <div class="divider">Ou entre com</div>
 
     <div class="social-login">
-      <button type="button" class="btn-social google">
-        <span>G</span> Google
-      </button>
-      <button type="button" class="btn-social microsoft">
-        <span>⊞</span> Microsoft
+      <div id="google-login-button" class="google-login-render"></div>
+      <button
+        type="button"
+        class="btn-google-fallback"
+        (click)="triggerGoogleLogin()"
+      >
+        Entrar com Google
       </button>
     </div>
 

@@ -1,8 +1,37 @@
-import { Component, signal } from '@angular/core';
+import { AfterViewInit, Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { GOOGLE_CLIENT_ID } from '../../services/constants';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+            ux_mode?: 'popup' | 'redirect';
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: 'standard' | 'icon';
+              theme?: 'outline' | 'filled_blue' | 'filled_black';
+              size?: 'large' | 'medium' | 'small';
+              shape?: 'rectangular' | 'pill' | 'circle' | 'square';
+              text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
+              width?: string | number;
+            }
+          ) => void;
+          prompt: () => void;
+        };
+      };
+    };
+  }
+}
 
 @Component({
   selector: 'app-login',
@@ -10,18 +39,90 @@ import { AuthService } from '../../services/auth';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements AfterViewInit {
   email = signal('');
   password = signal('');
   mostrarSenha = signal(false);
   rememberMe = signal(false);
   showError = signal(false);
   errorMessage = signal('');
+  googleButtonReady = signal(false);
 
   constructor(private authService: AuthService, private router: Router) {
     if (this.authService.isAuthenticated()) {
       void this.router.navigate(['/dashboard']);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeGoogleLogin();
+  }
+
+  private initializeGoogleLogin() {
+    if (!GOOGLE_CLIENT_ID) {
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const tryRender = () => {
+      const googleApi = window.google?.accounts?.id;
+      const target = document.getElementById('google-login-button');
+      if (!googleApi || !target) {
+        attempts += 1;
+        if (attempts < maxAttempts) {
+          setTimeout(tryRender, 200);
+        }
+        return;
+      }
+
+      googleApi.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => {
+          if (response.credential) {
+            void this.loginWithGoogle(response.credential);
+          }
+        },
+        ux_mode: 'popup',
+      });
+
+      target.innerHTML = '';
+      googleApi.renderButton(target, {
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        width: 320,
+      });
+      this.googleButtonReady.set(true);
+    };
+
+    tryRender();
+  }
+
+  triggerGoogleLogin() {
+    const googleApi = window.google?.accounts?.id;
+    if (!googleApi) {
+      this.errorMessage.set('Login com Google indisponivel no momento. Tente novamente.');
+      this.showError.set(true);
+      return;
+    }
+
+    this.showError.set(false);
+    googleApi.prompt();
+  }
+
+  private async loginWithGoogle(idToken: string) {
+    this.showError.set(false);
+    const result = await this.authService.loginWithGoogle(idToken);
+    if (result.success) {
+      await this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    this.errorMessage.set(result.message ?? 'Falha ao entrar com Google');
+    this.showError.set(true);
   }
 
   async login() {
