@@ -10,11 +10,11 @@ import { Observable, throwError, BehaviorSubject, from } from 'rxjs';
 import { catchError, switchMap, take, filter } from 'rxjs/operators';
 import { AuthService } from './auth';
 import { ACCESS_TOKEN_KEY, API_URL } from './constants';
-import Swal from 'sweetalert2';
 import {
   getFirstValidationErrorMessage,
   markAsHandledValidationError,
 } from './http-error.utils';
+import { MessageService } from './message.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -22,7 +22,9 @@ export class AuthInterceptor implements HttpInterceptor {
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   private readonly refreshRetryHeader = 'X-Refresh-Retry';
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService
+  ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const isApiRequest = request.url.startsWith(API_URL);
@@ -47,12 +49,7 @@ export class AuthInterceptor implements HttpInterceptor {
               const message = getFirstValidationErrorMessage(error);
               if (message && typeof window !== 'undefined') {
                 markAsHandledValidationError(error);
-                void Swal.fire({
-                  icon: 'error',
-                  title: 'Erro de validação',
-                  text: message,
-                  confirmButtonText: 'OK',
-                });
+                void MessageService.validationError(message);
               }
               return throwError(() => error);
             }
@@ -110,13 +107,27 @@ export class AuthInterceptor implements HttpInterceptor {
           }
           this.refreshTokenSubject.next(null);
           void this.authService.logout();
-          return throwError(() => new Error('Token refresh failed'));
+          return throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 401,
+                statusText: 'Unauthorized',
+                url: request.url,
+              })
+          );
         }),
         catchError(() => {
           this.isRefreshing = false;
           this.refreshTokenSubject.next(null);
           void this.authService.logout();
-          return throwError(() => new Error('Token refresh failed'));
+          return throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 401,
+                statusText: 'Unauthorized',
+                url: request.url,
+              })
+          );
         })
       );
     } else {

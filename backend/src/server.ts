@@ -11,6 +11,7 @@ import pedidoRoutes from "./routes/pedidoRoutes.js";
 import itemPedidoRoutes from "./routes/itemPedidoRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import movimentacaoRoutes from "./routes/movimentacaoRoutes.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 
 
@@ -54,6 +55,7 @@ app.use("/pedidos", pedidoRoutes);
 app.use("/itens-pedido", itemPedidoRoutes);
 app.use("/clientes", clienteRoutes);
 app.use("/movimentacoes", movimentacaoRoutes);
+app.use(errorHandler);
 
 appDataSource
     .initialize()

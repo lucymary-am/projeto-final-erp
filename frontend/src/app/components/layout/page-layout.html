@@ -21,6 +21,9 @@
       <a *ngIf="podeVerProdutos()" (click)="irParaProdutos()" class="menu-item" [class.ativo]="isPaginaAtiva('produtos')">
         <span class="label">Produtos</span>
       </a>
+      <a *ngIf="podeVerCategorias()" (click)="irParaCategorias()" class="menu-item" [class.ativo]="isPaginaAtiva('categorias')">
+        <span class="label">Categorias</span>
+      </a>
       <a *ngIf="podeVerFinanceiro()" (click)="irParaFinanceiro()" class="menu-item" [class.ativo]="isPaginaAtiva('financeiro')">
         <span class="label">Financeiro</span>
       </a>

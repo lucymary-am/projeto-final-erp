@@ -3,7 +3,7 @@ import { Component, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 
-type PageKey = 'dashboard' | 'produtos' | 'financeiro' | 'movimentacoes' | 'clientes' | 'pedidos' | 'usuarios';
+type PageKey = 'dashboard' | 'produtos' | 'categorias' | 'financeiro' | 'movimentacoes' | 'clientes' | 'pedidos' | 'usuarios';
 
 @Component({
   selector: 'app-page-layout',
@@ -36,6 +36,11 @@ export class PageLayoutComponent {
   }
 
   podeVerProdutos() {
+    const p = this.perfilAtual();
+    return p === 'ADMINISTRADOR_SISTEMA' || p === 'GERENTE_SUPERVISOR' || p === 'OPERADOR_ESTOQUE';
+  }
+
+  podeVerCategorias() {
     const p = this.perfilAtual();
     return p === 'ADMINISTRADOR_SISTEMA' || p === 'GERENTE_SUPERVISOR' || p === 'OPERADOR_ESTOQUE';
   }
@@ -76,6 +81,10 @@ export class PageLayoutComponent {
 
   irParaProdutos() {
     this.router.navigate(['/produtos']);
+  }
+
+  irParaCategorias() {
+    this.router.navigate(['/categorias']);
   }
 
   irParaFinanceiro() {

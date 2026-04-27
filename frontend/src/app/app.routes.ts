@@ -7,6 +7,7 @@ import { Movimentacoes } from './components/movimentacoes/movimentacoes';
 import { Clientes } from './components/clientes/clientes';
 import { Pedidos } from './components/pedidos/pedidos';
 import { Produtos } from './components/produtos/produtos';
+import { Categorias } from './components/categorias/categorias';
 import { UsuariosComponent } from './components/usuarios/usuarios';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
@@ -23,6 +24,12 @@ export const routes: Routes = [
   {
     path: 'produtos',
     component: Produtos,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { perfis: ['ADMINISTRADOR_SISTEMA', 'GERENTE_SUPERVISOR', 'OPERADOR_ESTOQUE'] },
+  },
+  {
+    path: 'categorias',
+    component: Categorias,
     canActivate: [AuthGuard, RoleGuard],
     data: { perfis: ['ADMINISTRADOR_SISTEMA', 'GERENTE_SUPERVISOR', 'OPERADOR_ESTOQUE'] },
   },

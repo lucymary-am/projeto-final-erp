@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, signal } from '@angular/core';
+import { AfterViewInit, Component, Inject, PLATFORM_ID, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../services/auth';
 import { GOOGLE_CLIENT_ID } from '../../services/constants';
 
@@ -48,7 +49,11 @@ export class Login implements AfterViewInit {
   errorMessage = signal('');
   googleButtonReady = signal(false);
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
     if (this.authService.isAuthenticated()) {
       void this.router.navigate(['/dashboard']);
     }
@@ -59,6 +64,10 @@ export class Login implements AfterViewInit {
   }
 
   private initializeGoogleLogin() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     if (!GOOGLE_CLIENT_ID) {
       return;
     }
@@ -102,6 +111,10 @@ export class Login implements AfterViewInit {
   }
 
   triggerGoogleLogin() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     const googleApi = window.google?.accounts?.id;
     if (!googleApi) {
       this.errorMessage.set('Login com Google indisponivel no momento. Tente novamente.');
