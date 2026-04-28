@@ -7,8 +7,8 @@
 }
 
 .sidebar-nav {
-  background: #fff;
-  color: #000;
+  background: linear-gradient(180deg, #0a3d5c 0%, #082f47 100%);
+  color: #fff;
   padding: 20px 16px;
   width: 250px;
   min-height: 100vh;
@@ -31,8 +31,7 @@
   gap: 12px;
   padding: 12px;
   font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 20px;
+  font-weight: 700;  
 }
 
 .sidebar-nav.recolhida .navbar-brand {
@@ -51,8 +50,8 @@
   margin: -6px 0 6px;
   padding: 0;
   background: transparent;
-  color: #111;
-  border: 1px solid #d1d5db;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
   cursor: pointer;
   display: grid;
@@ -61,9 +60,9 @@
 }
 
 .btn-toggle:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  color: #000;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
 }
 
 .toggle-arrow {
@@ -80,7 +79,7 @@
   display: block;
   height: 2px;
   margin: 3px 0;
-  background: #111;
+  background: #fff;
   border-radius: 2px;
 }
 
@@ -97,8 +96,8 @@
 }
 
 .logo-navbar {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
   filter: brightness(1.2);
 }
@@ -116,7 +115,7 @@
   gap: 12px;
   padding: 12px 16px;
   border-radius: 8px;
-  color: #111;
+  color: #fff;
   text-decoration: none;
   transition: all 0.3s;
   cursor: pointer;
@@ -128,6 +127,10 @@
   height: 20px;
   object-fit: contain;
   flex-shrink: 0;
+  /* Clareia icones PNG escuros para o sidebar azul */
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+  transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
 .sidebar-nav.recolhida .menu-item {
@@ -140,14 +143,19 @@
 }
 
 .menu-item:hover {
-  background: #f3f4f6;
-  color: #000;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 .menu-item.ativo {
-  background: #e5e7eb;
-  color: #000;
-  border-left: 3px solid #111;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-left: 3px solid #fff;
+}
+
+.menu-item:hover .menu-icon,
+.menu-item.ativo .menu-icon {
+  opacity: 1;
 }
 
 .navbar-user {
@@ -163,10 +171,10 @@
 
 .user-trigger {
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 10px;
-  background: #fff;
-  color: #111;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -176,15 +184,15 @@
 }
 
 .user-trigger:hover {
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .user-avatar {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #111;
-  color: #fff;
+  background: #fff;
+  color: #082f47;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -240,9 +248,9 @@
 .btn-logout {
   width: 100%;
   padding: 10px 12px;
-  background: #fff;
-  color: #111;
-  border: 1px solid #d1d5db;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 6px;
   cursor: pointer;
   font-size: 18px;
