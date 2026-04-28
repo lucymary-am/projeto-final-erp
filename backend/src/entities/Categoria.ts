@@ -19,6 +19,9 @@ export class Categoria {
   @Column({ type: "varchar", nullable: true })
   descricao?: string;
 
+  @Column({ type: "boolean", default: true })
+  status!: boolean;
+
   @OneToMany(() => Produto, (produto) => produto.categoria)
   produtos!: Produto[];
 

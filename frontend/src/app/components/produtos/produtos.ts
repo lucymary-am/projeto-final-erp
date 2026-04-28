@@ -28,6 +28,7 @@ type FiltroEstoque = 'todos' | 'em-estoque' | 'fora-de-estoque';
 type CategoriaOption = {
   id: string;
   nome: string;
+  status: boolean;
 };
 
 type ProdutoForm = {
@@ -175,13 +176,18 @@ export class Produtos {
     return {
       id: c.id_cat ?? c.id,
       nome: c.nome,
+      status: Boolean(c.status ?? c.ativo ?? true),
     };
   }
 
   async carregarCategorias() {
     try {
       const response = await firstValueFrom(this.http.get<any[]>(`${API_URL}/categorias`));
-      this.categorias = Array.isArray(response) ? response.map((c) => this.mapApiCategoria(c)) : [];
+      this.categorias = Array.isArray(response)
+        ? response
+            .map((c) => this.mapApiCategoria(c))
+            .filter((categoria) => categoria.status)
+        : [];
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
       this.categorias = [];

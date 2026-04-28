@@ -12,7 +12,7 @@ export interface Categoria {
   id: string;
   nome: string;
   descricao: string | null;
-  ativo: boolean;
+  status: boolean;
   created_at?: string;
 }
 
@@ -20,7 +20,7 @@ type CategoriaForm = {
   id?: string;
   nome: string;
   descricao: string;
-  ativo: boolean;
+  status: boolean;
 };
 
 @Component({
@@ -39,7 +39,7 @@ export class Categorias {
   formulario = signal<CategoriaForm>({
     nome: '',
     descricao: '',
-    ativo: true,
+    status: true,
   });
 
   categorias: Categoria[] = [];
@@ -55,7 +55,7 @@ export class Categorias {
       id: c.id_cat ?? c.id,
       nome: c.nome,
       descricao: c.descricao ?? null,
-      ativo: Boolean(c.ativo ?? true),
+      status: Boolean(c.status ?? c.ativo ?? true),
       created_at: c.created_at ?? undefined,
     };
   }
@@ -79,7 +79,7 @@ export class Categorias {
     this.formulario.set({
       nome: '',
       descricao: '',
-      ativo: true,
+      status: true,
     });
     this.mostraModal.set(true);
   }
@@ -93,8 +93,8 @@ export class Categorias {
     this.atualizarCampo(campo, valor);
   }
 
-  onAtivoChange(valor: string) {
-    this.atualizarCampo('ativo', valor === 'true');
+  onStatusChange(valor: string) {
+    this.atualizarCampo('status', valor === 'true');
   }
 
   abrirModalEditar(categoria: Categoria) {
@@ -102,7 +102,7 @@ export class Categorias {
       id: categoria.id,
       nome: categoria.nome,
       descricao: categoria.descricao ?? '',
-      ativo: categoria.ativo,
+      status: categoria.status,
     });
     this.mostraModal.set(true);
   }
@@ -115,7 +115,7 @@ export class Categorias {
     return {
       nome: form.nome.trim(),
       descricao: form.descricao ? form.descricao : null,
-      ativo: Boolean(form.ativo),
+      status: Boolean(form.status),
     };
   }
 

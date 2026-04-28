@@ -5,6 +5,8 @@ import { AppError } from "../errors/AppErrors.js";
 export type CreateCategoriaDTO = {
     nome: string;
     descricao?: string;
+    status?: boolean;
+    ativo?: boolean;
 };
 
 export type UpdateCategoriaDTO = Partial<CreateCategoriaDTO>;
@@ -46,6 +48,8 @@ export class CategoriaService {
         const categoria = this.categoriaRepo.create({
             nome: data.nome,
             ...(data.descricao !== undefined ? { descricao: data.descricao } : {}),
+            ...(data.status !== undefined ? { status: data.status } : {}),
+            ...(data.status === undefined && data.ativo !== undefined ? { status: data.ativo } : {}),
         });
 
         return await this.categoriaRepo.save(categoria);
@@ -68,6 +72,8 @@ export class CategoriaService {
         Object.assign(categoria, {
             nome: data.nome ?? categoria.nome,
             ...(data.descricao !== undefined ? { descricao: data.descricao } : {}),
+            ...(data.status !== undefined ? { status: data.status } : {}),
+            ...(data.status === undefined && data.ativo !== undefined ? { status: data.ativo } : {}),
         });
 
         return await this.categoriaRepo.save(categoria);
