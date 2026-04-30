@@ -1,11 +1,9 @@
 import { CommonModule } from "@angular/common";
 import {
-  ArcElement,
   BarController,
   BarElement,
   CategoryScale,
   Chart,
-  DoughnutController,
   Legend,
   LinearScale,
   Tooltip,
@@ -28,16 +26,7 @@ const CORES_PRIMARIAS_CONTRASTE = [
   "#7c4dff",
 ] as const;
 
-Chart.register(
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  ArcElement,
-  DoughnutController
-);
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 @Component({
   selector: "app-dashboard-charts",
@@ -54,7 +43,7 @@ export class DashboardChartsComponent implements AfterViewInit, OnChanges, OnDes
   @ViewChild("produtosChart") produtosCanvas?: ElementRef<HTMLCanvasElement>;
 
   private chartVendas?: Chart<"bar">;
-  private chartProdutos?: Chart<"doughnut">;
+  private chartProdutos?: Chart<"bar">;
   private viewReady = false;
 
   ngAfterViewInit(): void {
@@ -144,42 +133,38 @@ export class DashboardChartsComponent implements AfterViewInit, OnChanges, OnDes
     const cores = pontos.map((_, i) => CORES_PRIMARIAS_CONTRASTE[i % CORES_PRIMARIAS_CONTRASTE.length]);
 
     this.chartProdutos = new Chart(canvas, {
-      type: "doughnut",
+      type: "bar",
       data: {
         labels,
         datasets: [{
+          label: "Quantidade",
           data: valores,
           backgroundColor: cores,
-          borderWidth: 3,
           borderColor: "#ffffff",
-          hoverBorderColor: "#0a3d5c",
+          borderWidth: 2,
+          borderRadius: 6,
         }],
       },
       options: {
+        indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: "right",
-            labels: {
-              boxWidth: 14,
-              padding: 12,
-              font: { size: 12 },
-              color: "#333333",
-              usePointStyle: true,
-              pointStyle: "rectRounded",
-            },
-          },
+          legend: { display: false },
           tooltip: {
             callbacks: {
               label: (ctx) => {
-                const total = (ctx.dataset.data as number[]).reduce((a, b) => a + b, 0);
+                const total = valores.reduce((a, b) => a + b, 0);
                 const v = Number(ctx.raw);
                 const pct = total > 0 ? Math.round((v / total) * 100) : 0;
                 return `${ctx.label}: ${v} (${pct}%)`;
               },
             },
           },
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 } },
+          y: { grid: { display: false } },
         },
       },
     });
