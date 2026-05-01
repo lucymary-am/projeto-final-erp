@@ -33,6 +33,8 @@
           <th>Descrição</th>
           <th>Preço (unitário)</th>
           <th>Estoque</th>
+          <th>Estoque mínimo</th>
+          <th>Estoque máximo</th>
           <th>Data de entrada</th>
           <th>Ações</th>
         </tr>
@@ -43,10 +45,12 @@
           <td>{{ produto.descricao }}</td>
           <td>{{ produto.preco | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
           <td>
-            <span class="estoque-badge" [class.baixo]="produto.estoque_atual < produto.estoque_minimo">
+            <span class="estoque-badge" [ngClass]="getClasseEstoque(produto)">
               {{ produto.estoque_atual }}
             </span>
           </td>
+          <td>{{ produto.estoque_minimo }}</td>
+          <td>{{ produto.estoque_maximo ?? '-' }}</td>
           <td>{{ produto.created_at ? (produto.created_at | date: 'dd/MM/yyyy') : '-' }}</td>
           <td class="acoes">
             <button (click)="abrirModalEditar(produto)" class="btn-acao editar">✎</button>
@@ -54,7 +58,7 @@
           </td>
         </tr>
         <tr *ngIf="!loading() && produtos.length === 0">
-          <td colspan="6" class="sem-resultados">Nenhum produto encontrado.</td>
+          <td colspan="8" class="sem-resultados">Nenhum produto encontrado.</td>
         </tr>
       </tbody>
     </table>
