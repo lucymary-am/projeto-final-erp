@@ -20,11 +20,25 @@ import { PedidoService } from "./services/PedidoService.js";
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
+/** Vercel (*.vercel.app) e frontend local (localhost). */
+function isAllowedCorsOrigin(origin: string): boolean {
+    try {
+        const { protocol, hostname } = new URL(origin);
+        if (protocol !== "http:" && protocol !== "https:") return false;
+        const h = hostname.toLowerCase();
+        if (h === "vercel.app" || h.endsWith(".vercel.app")) return true;
+        if (h === "localhost" || h === "127.0.0.1" || h === "[::1]") return true;
+        return false;
+    } catch {
+        return false;
+    }
+}
+
 app.use(express.json());
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin) {
+    if (origin && isAllowedCorsOrigin(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
         res.setHeader("Vary", "Origin");
     }
