@@ -11,6 +11,7 @@ function usuarioPublicoJson(u: Usuario) {
         nome: u.nome,
         email: u.email,
         perfil: perfilEnumParaChave(u.perfil),
+        sexo: u.sexo ?? null,
         ativo: u.ativo,
         created_at: u.created_at,
     };

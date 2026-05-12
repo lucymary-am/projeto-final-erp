@@ -74,6 +74,7 @@ export class UsuarioService {
             email: emailSanitizado,
             senha: senha_hash,
             perfil: userData.perfil,
+            sexo: userData.sexo ?? null,
         });
 
         return await this.userRepo.save(novoUsuario);

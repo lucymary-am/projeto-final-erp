@@ -121,6 +121,20 @@
       </div>
 
       <div class="form-group">
+        <label>Sexo</label>
+        <p class="field-help">Usado na saudação do painel (ex.: Bem-vinda / Bem-vindo).</p>
+        <select
+          class="usuario-form-input"
+          [ngModel]="formulario().sexo"
+          (ngModelChange)="atualizarCampo('sexo', $event)"
+        >
+          <option value="">Não informado</option>
+          <option value="M">{{ sexoLabels.M }}</option>
+          <option value="F">{{ sexoLabels.F }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label>Perfil</label>
         <select
           class="usuario-form-input"

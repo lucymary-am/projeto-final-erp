@@ -17,11 +17,14 @@ import { AuthService } from '../../services/auth';
 import { isHandledValidationError } from '../../services/http-error.utils';
 import { MessageService } from '../../services/message.service';
 import { PageLayoutComponent } from '../layout/page-layout';
+import { USUARIO_SEXO_LABELS, type UsuarioSexo } from '../../enums/usuario-sexo';
 
 type UsuarioForm = {
   id: string;
   nome: string;
   email: string;
+  /** '' = não informado (API: null) */
+  sexo: '' | UsuarioSexo;
   password: string;
   confirmacaoSenha: string;
   termosSenha: boolean;
@@ -53,6 +56,7 @@ export class UsuariosComponent implements OnInit {
   /** Opções de perfil: sempre o array canônico `PERFIS` de `profiles.ts`. */
   readonly perfisCadastro: Perfil[] = [...PERFIS];
   readonly perfilLabels = PERFIL_LABELS;
+  readonly sexoLabels = USUARIO_SEXO_LABELS;
 
   senhaVisivel = signal(false);
   confirmacaoVisivel = signal(false);
@@ -67,6 +71,7 @@ export class UsuariosComponent implements OnInit {
     id: '',
     nome: '',
     email: '',
+    sexo: '',
     password: '',
     confirmacaoSenha: '',
     termosSenha: false,
@@ -192,6 +197,7 @@ export class UsuariosComponent implements OnInit {
       id: '',
       nome: '',
       email: '',
+      sexo: '',
       password: '',
       confirmacaoSenha: '',
       termosSenha: false,
@@ -209,6 +215,7 @@ export class UsuariosComponent implements OnInit {
       id: usuario.id_user,
       nome: usuario.nome,
       email: usuario.email,
+      sexo: usuario.sexo === 'M' || usuario.sexo === 'F' ? usuario.sexo : '',
       password: '',
       confirmacaoSenha: '',
       termosSenha: false,
@@ -229,6 +236,7 @@ export class UsuariosComponent implements OnInit {
       id: '',
       nome: '',
       email: '',
+      sexo: '',
       password: '',
       confirmacaoSenha: '',
       termosSenha: false,
@@ -340,6 +348,7 @@ export class UsuariosComponent implements OnInit {
           nome: form.nome,
           email: form.email,
           perfil: perfilSalvar,
+          sexo: form.sexo === '' ? null : form.sexo,
         };
         await this.usuarioService.editar(form.id, dados);
         await MessageService.success('Usuário atualizado com sucesso');
@@ -349,6 +358,7 @@ export class UsuariosComponent implements OnInit {
           email: form.email,
           password: form.password,
           perfil: perfilSalvar,
+          ...(form.sexo === 'M' || form.sexo === 'F' ? { sexo: form.sexo } : {}),
         };
         await this.usuarioService.criar(dados);
         await MessageService.success('Usuário criado com sucesso');

@@ -16,6 +16,7 @@ export type UsuarioAuthPublico = {
     nome: string;
     email: string;
     perfil: PerfilChave;
+    sexo: "M" | "F" | null;
 };
 
 export class AuthService {
@@ -57,6 +58,7 @@ export class AuthService {
             nome: usuario.nome,
             email: usuario.email,
             perfil: perfilEnumParaChave(usuario.perfil),
+            sexo: usuario.sexo ?? null,
         };
     }
 
@@ -68,7 +70,8 @@ export class AuthService {
                 nome: true,
                 email: true,
                 senha: true,
-                perfil: true
+                perfil: true,
+                sexo: true,
             }
         });
         if (!usuario) {
@@ -126,6 +129,7 @@ export class AuthService {
                 nome: true,
                 email: true,
                 perfil: true,
+                sexo: true,
                 google_id: true,
                 avatar_url: true,
                 senha: true,

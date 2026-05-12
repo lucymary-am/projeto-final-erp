@@ -12,6 +12,8 @@ export interface User {
   email: string;
   funcao: Perfil;
   perfil?: Perfil;
+  /** `F` → saudação feminina (ex.: "Bem-vinda"); ausente ou `M` → "Bem-vindo". */
+  sexo?: 'M' | 'F' | null;
 }
 
 interface LoginResponse {
@@ -20,6 +22,7 @@ interface LoginResponse {
     nome: string;
     email: string;
     perfil: string;
+    sexo?: 'M' | 'F' | null;
   };
   accessToken: string;
   refreshToken: string;
@@ -35,6 +38,7 @@ interface RefreshResponse {
     nome: string;
     email: string;
     perfil: string;
+    sexo?: 'M' | 'F' | null;
   };
   accessToken: string;
   refreshToken: string;
@@ -71,6 +75,10 @@ export class AuthService {
         const stored = JSON.parse(userJson) as User;
         this.currentUser.set(stored);
         this.isLoggedIn.set(true);
+        // Sessões gravadas antes do campo `sexo`: atualiza perfil/saudação com o servidor.
+        if (!('sexo' in stored)) {
+          void this.refreshAccessToken();
+        }
         return;
       } catch {
         this.clearSession();
@@ -167,6 +175,7 @@ export class AuthService {
         sobrenome: '',
         email: response.usuario.email,
         funcao: this.mapFuncaoToPerfil(response.usuario.perfil),
+        sexo: response.usuario.sexo ?? null,
       };
 
       this.saveSession(user, response.accessToken, response.refreshToken);
@@ -193,6 +202,7 @@ export class AuthService {
         sobrenome: '',
         email: response.usuario.email,
         funcao: this.mapFuncaoToPerfil(response.usuario.perfil),
+        sexo: response.usuario.sexo ?? null,
       };
 
       this.saveSession(user, response.accessToken, response.refreshToken);
@@ -283,6 +293,7 @@ export class AuthService {
         sobrenome: '',
         email: response.usuario.email,
         funcao: this.mapFuncaoToPerfil(response.usuario.perfil),
+        sexo: response.usuario.sexo ?? null,
       };
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       this.currentUser.set(user);

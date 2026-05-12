@@ -3,12 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from './constants';
 import { perfilFromApi, type Perfil } from './profiles';
+import type { UsuarioSexo } from '../enums/usuario-sexo';
 
 export interface Usuario {
   id_user: string;
   nome: string;
   email: string;
   perfil?: Perfil;
+  sexo?: UsuarioSexo | null;
   ativo: boolean;
   criadoEm?: string;
   created_at?: string;
@@ -19,12 +21,14 @@ export interface CreateUsuarioDTO {
   email: string;
   password: string;
   perfil: Perfil;
+  sexo?: UsuarioSexo | null;
 }
 
 export interface UpdateUsuarioDTO {
   nome?: string;
   email?: string;
   perfil?: Perfil;
+  sexo?: UsuarioSexo | null;
 }
 
 @Injectable({

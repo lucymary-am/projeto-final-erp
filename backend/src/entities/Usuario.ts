@@ -1,4 +1,5 @@
 import { Column, Entity, CreateDateColumn, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { SexoUsuario } from '../enums/SexoUsuario.js';
 import { Perfil } from '../types/Perfil.js';
 import { Pedido } from './Pedido.js';
 import { Sessao } from "./Sessao.js";
@@ -26,6 +27,9 @@ export class Usuario {
   /** Incluído nas queries por padrão (API precisa serializar perfil). `senha` continua `select: false`. */
   @Column({ type: 'enum', enum: Perfil, nullable: false })
   perfil!: Perfil;
+
+  @Column({ type: 'enum', enum: SexoUsuario, nullable: true })
+  sexo!: SexoUsuario | null;
 
   @Column({ type: 'boolean', default: true })
   ativo!: boolean;

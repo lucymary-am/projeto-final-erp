@@ -532,7 +532,7 @@
 }
 
 .modal-content .field-help {
-  margin-top: 6px;
+  margin: 0 0 0.5rem;
   font-size: 12px;
   color: #6b7280;
 }

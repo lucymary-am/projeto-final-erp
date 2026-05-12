@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SexoUsuario } from "../enums/SexoUsuario.js";
 import { Perfil } from "../types/Perfil.js";
 import { perfilChaveParaEnum } from "../utils/perfil.js";
 
@@ -29,6 +30,8 @@ function normalizePerfil(val: unknown): unknown {
 
 export const perfilSchema = z.preprocess(normalizePerfil, z.nativeEnum(Perfil));
 
+const sexoSchema = z.nativeEnum(SexoUsuario).nullable().optional();
+
 const passwordRulesMessage =
   "Senha: mínimo 8 caracteres, maiúscula, minúscula, número e caractere especial";
 
@@ -52,6 +55,7 @@ export const createUsuarioSchema = z.object({
       }
     }),
   perfil: perfilSchema,
+  sexo: sexoSchema,
 });
 
 export const updateUsuarioSchema = createUsuarioSchema
