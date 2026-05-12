@@ -12,6 +12,7 @@ import { SummaryCardsComponent, UltimoProdutoVendido } from './sections/summary-
 import { DashboardChartsComponent } from './sections/dashboard-charts/dashboard-charts';
 import { RecentActivitiesComponent } from './sections/recent-activities/recent-activities';
 import { StockStatusComponent } from './sections/stock-status/stock-status';
+import { PedidoStatus } from '../../enums/pedido-status';
 
 type DashboardResumo = {
   vendasMesAtual: number;
@@ -73,7 +74,6 @@ function formatDateKeyInTimezone(date: Date, timeZone: string): string {
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  currentUser = signal<any>(null);
   loading = signal(true);
   errorMessage = signal('');
   resumo = signal<DashboardResumo | null>(null);
@@ -84,11 +84,18 @@ export class Dashboard {
   ultimosVendidos = signal<UltimoProdutoVendido[]>([]);
 
   constructor(
-    private authService: AuthService,
+    readonly authService: AuthService,
     private http: HttpClient
   ) {
-    this.currentUser.set(this.authService.getCurrentUser());
     void this.carregarDados();
+  }
+
+  /** Concordância com o sexo cadastrado (`F` → "Bem-vinda"); sem cadastro usa forma masculina. */
+  saudacaoBoasVindas(): string {
+    const raw = this.authService.currentUser()?.sexo;
+    const feminino =
+      raw === 'F' || (typeof raw === 'string' && raw.trim().toUpperCase() === 'F');
+    return feminino ? 'Bem-vinda' : 'Bem-vindo';
   }
 
   readonly packageIconSrc = '/assets/menu/package.png';
@@ -260,7 +267,7 @@ export class Dashboard {
 
   private extrairUltimosVendidos(pedidos: any[]): UltimoProdutoVendido[] {
     const pedidosPagos = pedidos
-      .filter((p) => p.status === 'pago')
+      .filter((p) => p.status === PedidoStatus.Pago)
       .sort((a, b) => {
         const da = a?.created_at ? new Date(a.created_at).getTime() : 0;
         const db = b?.created_at ? new Date(b.created_at).getTime() : 0;

@@ -1,7 +1,6 @@
 <app-page-layout currentPage="dashboard">
     <div class="page-header">
-      <h1>Bem-vindo, {{ currentUser()?.nome }}</h1>
-      <p class="user-function">{{ currentUser()?.funcao }}</p>
+      <h1>{{ saudacaoBoasVindas() }}, {{ authService.currentUser()?.nome }}</h1>
     </div>
 
     @if (errorMessage()) {

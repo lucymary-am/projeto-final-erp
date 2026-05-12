@@ -271,14 +271,15 @@
   align-items: stretch;
 }
 
+.dashboard-activities-estoque > app-recent-activities,
+.dashboard-activities-estoque > app-stock-status {
+  display: block;
+  min-width: 0;
+}
+
 @media (min-width: 1024px) {
   .dashboard-activities-estoque {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-  }
-
-  .dashboard-activities-estoque .recent-section,
-  .dashboard-activities-estoque .estoque-status-card {
-    min-height: 0;
   }
 }
 
