@@ -2,18 +2,19 @@ import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import type { Perfil } from '../services/profiles';
+import { UsuarioPerfil } from '../enums/usuario-perfil';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoleGuard implements CanActivate {
   private rotaPorPerfil: Record<Perfil, string> = {
-    ADMINISTRADOR_SISTEMA: '/usuarios',
-    GERENTE_SUPERVISOR: '/usuarios',
-    OPERADOR_ESTOQUE: '/produtos',
-    FINANCEIRO_CONTADOR: '/financeiro',
-    APENAS_VISUALIZACAO: '/dashboard',
-    VENDEDOR: '/vendas',
+    [UsuarioPerfil.ADMINISTRADOR_SISTEMA]: '/usuarios',
+    [UsuarioPerfil.GERENTE_SUPERVISOR]: '/usuarios',
+    [UsuarioPerfil.OPERADOR_ESTOQUE]: '/produtos',
+    [UsuarioPerfil.FINANCEIRO_CONTADOR]: '/financeiro',
+    [UsuarioPerfil.APENAS_VISUALIZACAO]: '/dashboard',
+    [UsuarioPerfil.VENDEDOR]: '/vendas',
   };
 
   constructor(private authService: AuthService, private router: Router) {}

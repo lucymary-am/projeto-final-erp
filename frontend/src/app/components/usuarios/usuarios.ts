@@ -315,7 +315,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   onPerfilChange(val: string) {
-    this.atualizarCampo('perfil', val as Perfil);
+    this.atualizarCampo('perfil', perfilToKeyOrDefault(val));
     this.validarFormulario();
   }
 

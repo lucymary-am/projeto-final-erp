@@ -3,6 +3,7 @@ import { Pedido } from "../entities/Pedido.js";
 import { Produto } from "../entities/Produto.js";
 import { Cliente } from "../entities/Cliente.js";
 import { Historico } from "../entities/Historico.js";
+import { PedidoStatus } from "../enums/PedidoStatus.js";
 
 /** Início e fim do mês no fuso local (alinhado a “este mês” na interface). */
 function monthRangeLocal(year: number, monthIndex0: number): { start: Date; end: Date } {
@@ -67,7 +68,7 @@ export class DashboardService {
     const raw = await this.pedidoRepo
       .createQueryBuilder("p")
       .select("COALESCE(SUM(p.total), 0)", "sum")
-      .where("p.status = :status", { status: "pago" })
+      .where("p.status = :status", { status: PedidoStatus.Pago })
       .andWhere("p.created_at BETWEEN :start AND :end", {
         start: range.start,
         end: range.end,

@@ -5,6 +5,7 @@ import { Pedido } from "../entities/Pedido.js";
 import { Produto } from "../entities/Produto.js";
 import { AppError } from "../errors/AppErrors.js";
 import type { CreateItemPedidoDTO, UpdateItemPedidoDTO } from "../dtos/ItemPedidoDTO.js";
+import { PedidoStatus } from "../enums/PedidoStatus.js";
 
 export class ItemPedidoService {
   private dataSource: DataSource;
@@ -24,12 +25,17 @@ export class ItemPedidoService {
     return Number.isFinite(x) ? x : 0;
   }
 
+  private totalBrutoItens(itens: ItemPedido[]): number {
+    return itens.reduce((sum, i) => sum + this.num(i.quantidade) * this.num(i.preco_unitario), 0);
+  }
+
   private async recalcularTotalPedido(em: EntityManager, pedidoId: string): Promise<void> {
+    const pedido = await em.findOne(Pedido, { where: { id: pedidoId } });
+    if (!pedido) return;
     const itens = await em.find(ItemPedido, { where: { pedido: { id: pedidoId } } });
-    const total = itens.reduce(
-      (sum, i) => sum + this.num(i.quantidade) * this.num(i.preco_unitario),
-      0
-    );
+    const bruto = this.totalBrutoItens(itens);
+    const desconto = Math.max(0, this.num(pedido.desconto));
+    const total = Math.max(0, bruto - Math.min(desconto, bruto));
     await em.update(Pedido, { id: pedidoId }, { total });
   }
 
@@ -51,7 +57,7 @@ export class ItemPedidoService {
   }
 
   private ensurePedidoEditavel(pedido: Pedido): void {
-    if (pedido.status === "cancelado") {
+    if (pedido.status === PedidoStatus.Cancelado) {
       throw new AppError("Pedido cancelado não pode ser alterado", 400);
     }
   }
@@ -73,7 +79,7 @@ export class ItemPedidoService {
       });
       const saved = await em.save(item);
 
-      if (pedido.status === "pago") {
+      if (pedido.status === PedidoStatus.Pago) {
         await this.ajustarEstoqueProduto(em, produto.id_prod, -data.quantidade);
       }
 
@@ -117,7 +123,7 @@ export class ItemPedidoService {
       this.ensurePedidoEditavel(item.pedido);
 
       const oldPedidoId = item.pedido.id;
-      const oldPedidoPago = item.pedido.status === "pago";
+      const oldPedidoPago = item.pedido.status === PedidoStatus.Pago;
       const oldProdutoId = item.produto.id_prod;
       const oldQuantidade = item.quantidade;
 
@@ -137,7 +143,7 @@ export class ItemPedidoService {
       if (data.quantidade !== undefined) item.quantidade = data.quantidade;
       if (data.preco_unitario !== undefined) item.preco_unitario = data.preco_unitario;
 
-      const newPedidoPago = item.pedido.status === "pago";
+      const newPedidoPago = item.pedido.status === PedidoStatus.Pago;
       const newProdutoId = item.produto.id_prod;
       const newQuantidade = item.quantidade;
 
@@ -187,7 +193,7 @@ export class ItemPedidoService {
       this.ensurePedidoEditavel(item.pedido);
 
       const pedidoId = item.pedido.id;
-      if (item.pedido.status === "pago") {
+      if (item.pedido.status === PedidoStatus.Pago) {
         await this.ajustarEstoqueProduto(em, item.produto.id_prod, item.quantidade);
       }
 

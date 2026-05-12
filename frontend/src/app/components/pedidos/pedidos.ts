@@ -4,13 +4,13 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from '../../services/constants';
-import { AuthService } from '../../services/auth';
 import { isHandledValidationError } from '../../services/http-error.utils';
 import { MessageService } from '../../services/message.service';
 import { PageLayoutComponent } from '../layout/page-layout';
-import { CurrencyInputComponent } from '../currency-input/currency-input';
+import { Vendas } from '../vendas/vendas';
+import { PedidoStatus, isPedidoStatus, parsePedidoStatusOrDefault } from '../../enums/pedido-status';
 
-export type PedidoStatus = 'aberto' | 'pago' | 'cancelado';
+export { PedidoStatus } from '../../enums/pedido-status';
 
 export interface ItemPedidoView {
   id: number;
@@ -31,66 +31,77 @@ export interface PedidoView {
   itens: ItemPedidoView[];
 }
 
-type ClienteOption = {
-  id: number;
-  nome: string;
-};
-
-type ProdutoOption = {
-  id: string;
-  nome: string;
-  preco: number;
-};
-
-type LinhaItemForm = {
-  produtoId: string;
-  quantidade: number;
-  preco_unitario: number;
-};
-
-type NovoPedidoForm = {
-  clienteId: string;
-  linhas: LinhaItemForm[];
-};
-
 @Component({
   selector: 'app-pedidos',
-  imports: [CommonModule, FormsModule, PageLayoutComponent, CurrencyInputComponent],
+  imports: [CommonModule, FormsModule, PageLayoutComponent, Vendas],
   templateUrl: './pedidos.html',
   styleUrl: './pedidos.css',
 })
 export class Pedidos {
+  readonly PedidoStatus = PedidoStatus;
+  readonly filtroStatusTodos = 'todos' as const;
+
   loading = signal(false);
   errorMessage = signal('');
 
-  mostraModalNovo = signal(false);
-  mostraModalDetalhe = signal(false);
-  salvando = signal(false);
+  mostraModalVendas = signal(false);
+  /** Quando definido, o PDV carrega esse pedido (aberto = edição; demais = só leitura). */
+  pedidoParaEditarNoPdv = signal<string | null>(null);
+  /** Pedidos pago/cancelado: PDV só leitura (sem pagamento / novo pedido). */
+  pdvSomenteLeitura = signal(false);
   excluindo = signal(false);
   atualizandoStatus = signal(false);
 
+  /** Código exibido no título do modal (ex.: coluna Código da lista). */
+  pedidoCodigoModal = signal<string | null>(null);
   filtroStatus = signal<'todos' | PedidoStatus>('todos');
+  /** Substring, sem diferenciar maiúsculas. */
+  filtroCodigo = signal('');
+  filtroCliente = signal('');
+  /** `YYYY-MM-DD` do `<input type="date">`, vazio = ignorado. */
+  filtroDataDe = signal('');
+  filtroDataAte = signal('');
 
   pedidos: PedidoView[] = [];
   pedidosFiltrados: PedidoView[] = [];
-  clientes: ClienteOption[] = [];
-  produtos: ProdutoOption[] = [];
 
-  pedidoDetalhe = signal<PedidoView | null>(null);
-  statusEdicao = signal<PedidoStatus>('aberto');
-
-  formularioNovo = signal<NovoPedidoForm>({
-    clienteId: '',
-    linhas: [{ produtoId: '', quantidade: 1, preco_unitario: 0 }],
-  });
-
-  constructor(
-    private http: HttpClient,
-    private auth: AuthService
-  ) {
+  constructor(private http: HttpClient) {
     void this.carregarPedidos();
-    void this.carregarClientes();
-    void this.carregarProdutos();
+  }
+
+  abrirModalNovoPedido(): void {
+    this.pdvSomenteLeitura.set(false);
+    this.pedidoParaEditarNoPdv.set(null);
+    this.pedidoCodigoModal.set(null);
+    this.mostraModalVendas.set(true);
+  }
+
+  /** Abre o mesmo PDV para qualquer status; pago/cancelado em só leitura. */
+  abrirFormularioVenda(p: PedidoView): void {
+    this.pedidoParaEditarNoPdv.set(p.id);
+    this.pedidoCodigoModal.set(String(p.codigo ?? '').trim() || null);
+    this.pdvSomenteLeitura.set(p.status !== PedidoStatus.Aberto);
+    this.mostraModalVendas.set(true);
+  }
+
+  tituloModalVendas(): string {
+    const cod = (this.pedidoCodigoModal() ?? '').trim();
+    const sufixo = cod ? ` · ${cod}` : '';
+    if (!this.pedidoParaEditarNoPdv()) return 'Nova venda';
+    if (this.pdvSomenteLeitura()) return `Pedido${sufixo}`;
+    return `Alterar venda${sufixo}`;
+  }
+
+  fecharModalVendas(): void {
+    this.mostraModalVendas.set(false);
+    this.pedidoParaEditarNoPdv.set(null);
+    this.pedidoCodigoModal.set(null);
+    this.pdvSomenteLeitura.set(false);
+  }
+
+  onPedidoRegistradoNaVendas(): void {
+    void this.carregarPedidos();
+    this.fecharModalVendas();
   }
 
   private mapApiPedido(p: any): PedidoView {
@@ -108,7 +119,7 @@ export class Pedidos {
       clienteNome: p.cliente?.nome ?? '—',
       usuarioNome: p.usuario?.nome ?? '—',
       total: Number(p.total ?? 0),
-      status: (p.status as PedidoStatus) ?? 'aberto',
+      status: parsePedidoStatusOrDefault(p?.status),
       data_entrega: p.data_entrega ?? undefined,
       created_at: p.created_at ?? undefined,
       itens,
@@ -116,16 +127,72 @@ export class Pedidos {
   }
 
   private aplicarFiltro() {
+    let list = [...this.pedidos];
+
     const f = this.filtroStatus();
-    if (f === 'todos') {
-      this.pedidosFiltrados = [...this.pedidos];
-      return;
+    if (f !== 'todos') {
+      list = list.filter((x) => x.status === f);
     }
-    this.pedidosFiltrados = this.pedidos.filter((x) => x.status === f);
+
+    const cod = this.filtroCodigo().trim().toLowerCase();
+    if (cod) {
+      list = list.filter((x) => String(x.codigo ?? '').toLowerCase().includes(cod));
+    }
+
+    const cli = this.filtroCliente().trim().toLowerCase();
+    if (cli) {
+      list = list.filter((x) => String(x.clienteNome ?? '').toLowerCase().includes(cli));
+    }
+
+    const de = this.filtroDataDe().trim();
+    const ate = this.filtroDataAte().trim();
+    if (de || ate) {
+      list = list.filter((p) => {
+        const ymd = this.dataPedidoReferenciaYmd(p);
+        if (!ymd) return false;
+        if (de && ymd < de) return false;
+        if (ate && ymd > ate) return false;
+        return true;
+      });
+    }
+
+    this.pedidosFiltrados = list;
+  }
+
+  /** Mesma referência da coluna Data: entrega se houver, senão criação (`YYYY-MM-DD` local). */
+  private dataPedidoReferenciaYmd(p: PedidoView): string | null {
+    const rawEntrega = p.data_entrega ? String(p.data_entrega).trim() : '';
+    const rawCriado = p.created_at ? String(p.created_at).trim() : '';
+    const use = rawEntrega || rawCriado;
+    if (!use) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(use)) return use;
+    const d = new Date(use);
+    if (Number.isNaN(d.getTime())) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  onFiltroCampoChange(): void {
+    this.aplicarFiltro();
+  }
+
+  limparFiltrosBusca(): void {
+    this.filtroCodigo.set('');
+    this.filtroCliente.set('');
+    this.filtroDataDe.set('');
+    this.filtroDataAte.set('');
+    this.aplicarFiltro();
   }
 
   onFiltroStatusChange(valor: string) {
-    if (valor === 'todos' || valor === 'aberto' || valor === 'pago' || valor === 'cancelado') {
+    if (valor === this.filtroStatusTodos) {
+      this.filtroStatus.set('todos');
+      this.aplicarFiltro();
+      return;
+    }
+    if (isPedidoStatus(valor)) {
       this.filtroStatus.set(valor);
       this.aplicarFiltro();
     }
@@ -146,263 +213,52 @@ export class Pedidos {
     }
   }
 
-  private mapApiCliente(c: any): ClienteOption {
-    return {
-      id: Number(c.id),
-      nome: c.nome,
-    };
-  }
-
-  async carregarClientes() {
-    try {
-      const response = await firstValueFrom(this.http.get<any[]>(`${API_URL}/clientes`));
-      this.clientes = Array.isArray(response) ? response.map((c) => this.mapApiCliente(c)) : [];
-    } catch (error) {
-      console.error('Erro ao carregar clientes:', error);
-      this.clientes = [];
-    }
-  }
-
-  private mapApiProduto(pr: any): ProdutoOption {
-    return {
-      id: String(pr.id_prod ?? pr.id),
-      nome: pr.nome,
-      preco: Number(pr.preco ?? 0),
-    };
-  }
-
-  async carregarProdutos() {
-    try {
-      const response = await firstValueFrom(this.http.get<any[]>(`${API_URL}/produtos`));
-      this.produtos = Array.isArray(response) ? response.map((pr) => this.mapApiProduto(pr)) : [];
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
-      this.produtos = [];
-    }
-  }
-
   labelStatus(s: PedidoStatus): string {
     const map: Record<PedidoStatus, string> = {
-      aberto: 'Aberto',
-      pago: 'Pago',
-      cancelado: 'Cancelado',
+      [PedidoStatus.Aberto]: 'Aberto',
+      [PedidoStatus.Pago]: 'Pago',
+      [PedidoStatus.Cancelado]: 'Cancelado',
     };
     return map[s] ?? s;
   }
 
   classeStatus(s: PedidoStatus): string {
-    if (s === 'pago') return 'status-pago';
-    if (s === 'cancelado') return 'status-cancelado';
+    if (s === PedidoStatus.Pago) return 'status-pago';
+    if (s === PedidoStatus.Cancelado) return 'status-cancelado';
     return 'status-aberto';
   }
 
-  abrirModalNovo() {
-    void this.carregarClientes();
-    void this.carregarProdutos();
-    this.formularioNovo.set({
-      clienteId: '',
-      linhas: [{ produtoId: '', quantidade: 1, preco_unitario: 0 }],
-    });
-    this.mostraModalNovo.set(true);
+  pedidoEditavelNaLista(status: PedidoStatus): boolean {
+    return status === PedidoStatus.Aberto;
   }
 
-  fecharModalNovo() {
-    this.mostraModalNovo.set(false);
-  }
-
-  private atualizarFormNovo(mut: (draft: NovoPedidoForm) => void) {
-    const atual = this.formularioNovo();
-    const copia: NovoPedidoForm = {
-      clienteId: atual.clienteId,
-      linhas: atual.linhas.map((l) => ({ ...l })),
-    };
-    mut(copia);
-    this.formularioNovo.set(copia);
-  }
-
-  onClienteNovoChange(valor: string) {
-    this.atualizarFormNovo((d) => {
-      d.clienteId = valor;
-    });
-  }
-
-  adicionarLinha() {
-    this.atualizarFormNovo((d) => {
-      d.linhas.push({ produtoId: '', quantidade: 1, preco_unitario: 0 });
-    });
-  }
-
-  removerLinha(index: number) {
-    this.atualizarFormNovo((d) => {
-      if (d.linhas.length <= 1) return;
-      d.linhas.splice(index, 1);
-    });
-  }
-
-  onProdutoLinhaChange(index: number, produtoId: string) {
-    const pr = this.produtos.find((p) => p.id === produtoId);
-    this.atualizarFormNovo((d) => {
-      const linha = d.linhas[index];
-      if (!linha) return;
-      linha.produtoId = produtoId;
-      if (pr) {
-        linha.preco_unitario = pr.preco;
-      }
-    });
-  }
-
-  onQuantidadeLinhaChange(index: number, valor: string | number) {
-    const n = typeof valor === 'number' ? valor : Number(valor);
-    this.atualizarFormNovo((d) => {
-      const linha = d.linhas[index];
-      if (!linha) return;
-      linha.quantidade = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
-    });
-  }
-
-  onPrecoLinhaChange(index: number, valor: string | number) {
-    const n = typeof valor === 'number' ? valor : Number(valor);
-    this.atualizarFormNovo((d) => {
-      const linha = d.linhas[index];
-      if (!linha) return;
-      linha.preco_unitario = Number.isFinite(n) && n >= 0 ? n : 0;
-    });
-  }
-
-  abrirModalDetalhe(p: PedidoView) {
-    this.pedidoDetalhe.set(p);
-    this.statusEdicao.set(p.status);
-    this.mostraModalDetalhe.set(true);
-  }
-
-  fecharModalDetalhe() {
-    this.mostraModalDetalhe.set(false);
-    this.pedidoDetalhe.set(null);
-  }
-
-  async salvarNovoPedido() {
-    const user = this.auth.currentUser();
-    const uid = user?.id?.trim();
-    if (!uid) {
-      void MessageService.validationError('Sessão inválida. Faça login novamente.');
-      return;
-    }
-
-    const form = this.formularioNovo();
-    const clienteId = Number(form.clienteId);
-    if (!Number.isFinite(clienteId) || clienteId <= 0) {
-      void MessageService.validationError('Selecione um cliente');
-      return;
-    }
-
-    const linhasValidas = form.linhas.filter((l) => l.produtoId.trim() && l.quantidade > 0 && l.preco_unitario > 0);
-    if (linhasValidas.length === 0) {
-      void MessageService.validationError('Inclua ao menos um item com produto, quantidade e preço');
-      return;
-    }
-
-    try {
-      this.salvando.set(true);
-
-      const criado = await firstValueFrom(
-        this.http.post<any>(`${API_URL}/pedidos`, {
-          clienteId,
-          usuarioId: uid,
-          total: 0,
-          status: 'aberto',
-          itens: [],
-        })
-      );
-
-      const pedidoId = String(criado?.id ?? '');
-      if (!pedidoId) {
-        throw new Error('Resposta inválida ao criar pedido');
-      }
-
-      try {
-        for (const linha of linhasValidas) {
-          await firstValueFrom(
-            this.http.post(`${API_URL}/itens-pedido`, {
-              pedidoId,
-              produtoId: linha.produtoId.trim(),
-              quantidade: linha.quantidade,
-              preco_unitario: linha.preco_unitario,
-            })
-          );
-        }
-      } catch (itemErr) {
-        try {
-          await firstValueFrom(this.http.delete(`${API_URL}/pedidos/${pedidoId}`));
-        } catch {
-          void MessageService.error(
-            'Pedido criado parcialmente e não foi possível desfazer. Verifique o pedido em aberto.'
-          );
-        }
-        throw itemErr;
-      }
-
-      await this.carregarPedidos();
-      await MessageService.success('Pedido criado com sucesso');
-      this.fecharModalNovo();
-    } catch (error) {
-      console.error('Erro ao salvar pedido:', error);
-      if (isHandledValidationError(error)) return;
-      const message = MessageService.extractErrorMessage(error, 'Erro ao salvar pedido');
-      void MessageService.error(message);
-    } finally {
-      this.salvando.set(false);
-    }
-  }
-
-  async salvarStatusPedido() {
-    const p = this.pedidoDetalhe();
-    if (!p) return;
-
-    const novo = this.statusEdicao();
-    if (novo === p.status) {
-      this.fecharModalDetalhe();
-      return;
-    }
-
-    try {
-      this.atualizandoStatus.set(true);
-      await firstValueFrom(this.http.patch(`${API_URL}/pedidos/${p.id}/status`, { status: novo }));
-      await this.carregarPedidos();
-      await MessageService.success('Status atualizado');
-      this.fecharModalDetalhe();
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      if (isHandledValidationError(error)) return;
-      const message = MessageService.extractErrorMessage(error, 'Erro ao atualizar status');
-      void MessageService.error(message);
-    } finally {
-      this.atualizandoStatus.set(false);
-    }
+  pedidoSomenteVisualizacaoNaLista(status: PedidoStatus): boolean {
+    return status === PedidoStatus.Pago || status === PedidoStatus.Cancelado;
   }
 
   podePagarPedido(statusAtual: PedidoStatus): boolean {
-    return statusAtual === 'aberto';
+    return statusAtual === PedidoStatus.Aberto;
   }
 
   podeCancelarPedido(statusAtual: PedidoStatus): boolean {
-    return statusAtual === 'aberto';
+    return statusAtual === PedidoStatus.Aberto;
   }
 
   async pagarPedido(p: PedidoView) {
-    await this.atualizarStatusPedidoLista(p, 'pago');
+    await this.atualizarStatusPedidoLista(p, PedidoStatus.Pago);
   }
 
   async cancelarPedido(p: PedidoView) {
-    await this.atualizarStatusPedidoLista(p, 'cancelado');
+    await this.atualizarStatusPedidoLista(p, PedidoStatus.Cancelado);
   }
 
   private async atualizarStatusPedidoLista(p: PedidoView, status: PedidoStatus) {
     if (p.status === status) return;
-    const acao = status === 'pago' ? 'pagar' : 'cancelar';
+    const acao = status === PedidoStatus.Pago ? 'pagar' : 'cancelar';
     const ok = await MessageService.confirmAction(`Tem certeza que deseja ${acao} este pedido?`, {
       title: 'Confirma alteração de status',
-      confirmButtonText: status === 'pago' ? 'Pagar' : 'Cancelar pedido',
-      confirmButtonColor: status === 'pago' ? '#2e7d32' : '#dc2626',
+      confirmButtonText: status === PedidoStatus.Pago ? 'Pagar' : 'Cancelar pedido',
+      confirmButtonColor: status === PedidoStatus.Pago ? '#2e7d32' : '#dc2626',
     });
     if (!ok) return;
 
@@ -433,7 +289,6 @@ export class Pedidos {
       this.excluindo.set(true);
       await firstValueFrom(this.http.delete(`${API_URL}/pedidos/${id}`));
       await this.carregarPedidos();
-      this.fecharModalDetalhe();
       await MessageService.success('Pedido excluído');
     } catch (error) {
       console.error('Erro ao excluir pedido:', error);
@@ -445,24 +300,15 @@ export class Pedidos {
     }
   }
 
-  podeAlterarStatus(statusAtual: PedidoStatus): boolean {
-    return statusAtual === 'aberto';
-  }
-
   podeExcluirPedido(statusAtual: PedidoStatus): boolean {
-    return statusAtual !== 'pago';
+    return statusAtual !== PedidoStatus.Pago;
   }
 
   mensagemListaVazia(): string {
     if (this.pedidos.length === 0) {
-      return 'Nenhum pedido cadastrado. Clique em "+ Novo Pedido" para começar.';
+      return 'Nenhum pedido cadastrado. Clique em "+ Nova Venda" para registrar.';
     }
-    return 'Nenhum pedido corresponde ao status selecionado.';
+    return 'Nenhum pedido corresponde aos filtros aplicados.';
   }
 
-  onStatusEdicaoChange(valor: string) {
-    if (valor === 'aberto' || valor === 'pago' || valor === 'cancelado') {
-      this.statusEdicao.set(valor);
-    }
-  }
 }

@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import { Historico } from "../entities/Historico.js";
 import { Pedido } from "../entities/Pedido.js";
+import { PedidoStatus } from "../enums/PedidoStatus.js";
 
 type Genero = "masculino" | "feminino";
 
@@ -190,9 +191,9 @@ export class HistoricoSubscriber implements EntitySubscriberInterface {
       const statusFoiAlterado = event.updatedColumns.some((column) => column.propertyName === "status");
 
       if (statusFoiAlterado && statusNovo !== statusAnterior) {
-        if (statusNovo === "cancelado") {
+        if (statusNovo === PedidoStatus.Cancelado) {
           acao = "Pedido cancelado";
-        } else if (statusNovo === "pago") {
+        } else if (statusNovo === PedidoStatus.Pago) {
           acao = "Pagamento de pedido registrado";
         }
       }

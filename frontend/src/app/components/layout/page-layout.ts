@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
-import { PerfilEnum, type Perfil } from '../../services/profiles';
+import { UsuarioPerfil, type Perfil } from '../../enums/usuario-perfil';
 
 type PageKey = 'dashboard' | 'produtos' | 'categorias' | 'financeiro' | 'movimentacoes' | 'clientes' | 'pedidos' | 'vendas' | 'usuarios';
 
@@ -33,7 +33,7 @@ export class PageLayoutComponent {
   }
 
   /** Retorna true se o usuário tiver um dos perfis informados. */
-  private perfilEhUmDe(...perfis: PerfilEnum[]): boolean {
+  private perfilEhUmDe(...perfis: UsuarioPerfil[]): boolean {
     const p = this.perfilAtual();
     if (p === null) return false;
     return perfis.some((candidato) => candidato === p);
@@ -45,58 +45,58 @@ export class PageLayoutComponent {
 
   podeVerProdutos() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.OPERADOR_ESTOQUE,
-      PerfilEnum.VENDEDOR
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.OPERADOR_ESTOQUE,
+      UsuarioPerfil.VENDEDOR
     );
   }
 
   podeVerCategorias() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.OPERADOR_ESTOQUE
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.OPERADOR_ESTOQUE
     );
   }
 
   podeVerFinanceiro() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.FINANCEIRO_CONTADOR
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.FINANCEIRO_CONTADOR
     );
   }
 
   podeVerMovimentacoes() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.OPERADOR_ESTOQUE,
-      PerfilEnum.FINANCEIRO_CONTADOR,
-      PerfilEnum.VENDEDOR
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.OPERADOR_ESTOQUE,
+      UsuarioPerfil.FINANCEIRO_CONTADOR,
+      UsuarioPerfil.VENDEDOR
     );
   }
 
   podeVerClientes() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.FINANCEIRO_CONTADOR,
-      PerfilEnum.VENDEDOR
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.FINANCEIRO_CONTADOR,
+      UsuarioPerfil.VENDEDOR
     );
   }
 
   podeVerPedidos() {
     return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.VENDEDOR
+      UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      UsuarioPerfil.GERENTE_SUPERVISOR,
+      UsuarioPerfil.VENDEDOR
     );
   }
 
   podeVerUsuarios() {
-    return this.perfilEhUmDe(PerfilEnum.ADMINISTRADOR_SISTEMA);
+    return this.perfilEhUmDe(UsuarioPerfil.ADMINISTRADOR_SISTEMA);
   }
 
   irParaDashboard() {

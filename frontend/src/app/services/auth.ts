@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_URL, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_STORAGE_KEY } from './constants';
 import { PERFIL_PADRAO, type Perfil } from './profiles';
+import { UsuarioPerfil } from '../enums/usuario-perfil';
 import { isHandledValidationError } from './http-error.utils';
 
 export interface User {
@@ -109,32 +110,32 @@ export class AuthService {
 
   private mapFuncaoToPerfil(funcao: unknown): Perfil {
     const numericMap: Record<number, Perfil> = {
-      0: 'ADMINISTRADOR_SISTEMA',
-      1: 'GERENTE_SUPERVISOR',
-      2: 'OPERADOR_ESTOQUE',
-      3: 'FINANCEIRO_CONTADOR',
+      0: UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      1: UsuarioPerfil.GERENTE_SUPERVISOR,
+      2: UsuarioPerfil.OPERADOR_ESTOQUE,
+      3: UsuarioPerfil.FINANCEIRO_CONTADOR,
       4: PERFIL_PADRAO,
-      5: 'VENDEDOR',
+      5: UsuarioPerfil.VENDEDOR,
     };
     if (typeof funcao === 'number' && Number.isFinite(funcao)) {
       return numericMap[funcao] ?? PERFIL_PADRAO;
     }
     const perfil = typeof funcao === 'string' ? funcao.trim().toUpperCase() : '';
     const aliasMap: Record<string, Perfil> = {
-      ADMINISTRADOR: 'ADMINISTRADOR_SISTEMA',
-      ADMINISTRADOR_SISTEMA: 'ADMINISTRADOR_SISTEMA',
-      GERENTE: 'GERENTE_SUPERVISOR',
-      SUPERVISOR: 'GERENTE_SUPERVISOR',
-      GERENTE_SUPERVISOR: 'GERENTE_SUPERVISOR',
-      OPERADOR_ESTOQUE: 'OPERADOR_ESTOQUE',
-      ALMOXARIFE: 'OPERADOR_ESTOQUE',
-      FINANCEIRO: 'FINANCEIRO_CONTADOR',
-      CONTADOR: 'FINANCEIRO_CONTADOR',
-      FINANCEIRO_CONTADOR: 'FINANCEIRO_CONTADOR',
+      ADMINISTRADOR: UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      ADMINISTRADOR_SISTEMA: UsuarioPerfil.ADMINISTRADOR_SISTEMA,
+      GERENTE: UsuarioPerfil.GERENTE_SUPERVISOR,
+      SUPERVISOR: UsuarioPerfil.GERENTE_SUPERVISOR,
+      GERENTE_SUPERVISOR: UsuarioPerfil.GERENTE_SUPERVISOR,
+      OPERADOR_ESTOQUE: UsuarioPerfil.OPERADOR_ESTOQUE,
+      ALMOXARIFE: UsuarioPerfil.OPERADOR_ESTOQUE,
+      FINANCEIRO: UsuarioPerfil.FINANCEIRO_CONTADOR,
+      CONTADOR: UsuarioPerfil.FINANCEIRO_CONTADOR,
+      FINANCEIRO_CONTADOR: UsuarioPerfil.FINANCEIRO_CONTADOR,
       APENAS_VISUALIZACAO: PERFIL_PADRAO,
       VISUALIZACAO: PERFIL_PADRAO,
       LEITOR: PERFIL_PADRAO,
-      VENDEDOR: 'VENDEDOR',
+      VENDEDOR: UsuarioPerfil.VENDEDOR,
     };
     return aliasMap[perfil] ?? PERFIL_PADRAO;
   }

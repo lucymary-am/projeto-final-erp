@@ -11,6 +11,7 @@ import {
   TipoMovimentacao,
 } from "../entities/Movimentacao.js";
 import { AppError } from "../errors/AppErrors.js";
+import { PedidoStatus, isPedidoStatus, parsePedidoStatusOrDefault } from "../enums/PedidoStatus.js";
 
 /** Relações carregadas nas respostas de pedido (itens com produto para exibição). */
 const pedidoDetailRelations = {
@@ -84,6 +85,12 @@ export class PedidoService {
       }
     }
     return sum;
+  }
+
+  /** Total líquido: bruto menos desconto (desconto limitado ao bruto). */
+  private totalLiquido(bruto: number, desconto: number): number {
+    const d = Math.max(0, desconto);
+    return Math.max(0, bruto - Math.min(d, bruto));
   }
 
   private async ajustarEstoqueProduto(em: EntityManager, produtoId: string, delta: number): Promise<void> {
@@ -160,22 +167,27 @@ export class PedidoService {
       const usuario = await usuarioRepo.findOneBy({ id_user: data.usuarioId });
       if (!usuario) throw new AppError("Usuário não encontrado", 404);
 
+      const descontoPedido = Math.max(0, this.num(data.desconto));
       const fromItens = this.totalFromItensPayload(data.itens);
-      const total = fromItens !== null ? fromItens : this.num(data.total);
+      const bruto = fromItens !== null ? fromItens : this.num(data.total);
+      const total = this.totalLiquido(bruto, descontoPedido);
+      const statusInicial = parsePedidoStatusOrDefault(data?.status);
 
       const pedido = pedidoRepo.create({
         codigo: await this.gerarCodigoPedidoUnico(em),
         cliente,
         usuario,
         total,
-        status: data.status ?? "aberto",
+        desconto: descontoPedido,
+        status: statusInicial,
         itens: data.itens,
         data_entrega: data.data_entrega ?? null,
-      });
+        data_pagamento: statusInicial === PedidoStatus.Pago ? new Date() : null,
+      } as import("typeorm").DeepPartial<Pedido>);
 
       const saved = await pedidoRepo.save(pedido);
 
-      if (saved.status === "pago") {
+      if (saved.status === PedidoStatus.Pago) {
         const fullItens = await em.find(ItemPedido, {
           where: { pedido: { id: saved.id } },
           relations: { produto: true },
@@ -216,9 +228,10 @@ export class PedidoService {
   }
 
   async updateStatus(id: string, status: string) {
-    if (!["aberto", "pago", "cancelado"].includes(status)) {
+    if (!isPedidoStatus(status)) {
       throw new AppError("Status inválido", 400);
     }
+    const statusNovo: PedidoStatus = status;
 
     return await this.dataSource.transaction(async (em) => {
       const pedidoRepo = em.getRepository(Pedido);
@@ -230,7 +243,7 @@ export class PedidoService {
       if (!pedido) throw new AppError("Pedido não encontrado", 404);
 
       const anterior = pedido.status;
-      if (anterior === status) {
+      if (anterior === statusNovo) {
         const unchanged = await pedidoRepo.findOne({
           where: { id },
           relations: pedidoDetailRelations,
@@ -239,20 +252,21 @@ export class PedidoService {
         return unchanged;
       }
 
-      if (anterior === "cancelado") {
+      if (anterior === PedidoStatus.Cancelado) {
         throw new AppError("Pedido cancelado não pode ter status alterado", 400);
       }
 
-      if (anterior === "pago" && status !== "pago") {
+      if (anterior === PedidoStatus.Pago && statusNovo !== PedidoStatus.Pago) {
         throw new AppError("Pedido pago não pode ser editado", 400);
       }
 
-      if (anterior === "aberto" && status === "pago") {
+      if (anterior === PedidoStatus.Aberto && statusNovo === PedidoStatus.Pago) {
         await this.baixarEstoqueItensPedido(em, pedido.itens ?? []);
         await this.registrarMovimentacoesVenda(em, pedido.itens ?? [], pedido.usuario);
+        pedido.data_pagamento = new Date();
       }
 
-      pedido.status = status;
+      pedido.status = statusNovo;
       await pedidoRepo.save(pedido);
 
       const atualizado = await pedidoRepo.findOne({
@@ -274,7 +288,7 @@ export class PedidoService {
       });
       if (!pedido) throw new AppError("Pedido não encontrado", 404);
 
-      if (pedido.status === "pago") {
+      if (pedido.status === PedidoStatus.Pago) {
         throw new AppError("Pedido pago não pode ser removido", 400);
       }
 

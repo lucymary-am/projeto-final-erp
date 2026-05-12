@@ -1,8 +1,19 @@
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
 .estoque-status-card {
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .estoque-status-card__head {
@@ -11,6 +22,7 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .estoque-status-card__title {
@@ -32,6 +44,7 @@
 }
 
 .estoque-status-skeleton {
+  flex: 1;
   min-height: 200px;
   border-radius: 8px;
   background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
@@ -54,10 +67,17 @@
   text-align: center;
   color: #666;
   font-size: 14px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 .estoque-table-wrap {
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   margin: 0 -4px;
 }
 
