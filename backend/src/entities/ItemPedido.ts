@@ -6,7 +6,6 @@ import {
 } from "typeorm";
 import { Pedido } from "./Pedido.js";
 import { Produto } from "./Produto.js";
-import { on } from "cluster";
 
 @Entity("item_pedido")
 export class ItemPedido {
