@@ -18,7 +18,7 @@ import { PedidoService } from "./services/PedidoService.js";
 
 
 const app = express();
-const PORT = process.env.PORT ?? 3000;
+const PORT = process.env.PORT || 3001;
 
 /** Vercel (*.vercel.app) e frontend local (localhost). */
 function isAllowedCorsOrigin(origin: string): boolean {
