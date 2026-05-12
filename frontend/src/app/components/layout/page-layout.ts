@@ -91,16 +91,6 @@ export class PageLayoutComponent {
     return this.perfilEhUmDe(
       PerfilEnum.ADMINISTRADOR_SISTEMA,
       PerfilEnum.GERENTE_SUPERVISOR,
-      PerfilEnum.FINANCEIRO_CONTADOR,
-      PerfilEnum.OPERADOR_ESTOQUE,
-      PerfilEnum.VENDEDOR
-    );
-  }
-
-  podeVerVendas() {
-    return this.perfilEhUmDe(
-      PerfilEnum.ADMINISTRADOR_SISTEMA,
-      PerfilEnum.GERENTE_SUPERVISOR,
       PerfilEnum.VENDEDOR
     );
   }
@@ -135,10 +125,6 @@ export class PageLayoutComponent {
 
   irParaPedidos() {
     this.router.navigate(['/pedidos']);
-  }
-
-  irParaVendas() {
-    this.router.navigate(['/vendas']);
   }
 
   irParaUsuarios() {
