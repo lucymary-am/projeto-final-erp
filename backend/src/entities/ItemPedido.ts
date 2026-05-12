@@ -6,13 +6,14 @@ import {
 } from "typeorm";
 import { Pedido } from "./Pedido.js";
 import { Produto } from "./Produto.js";
+import { on } from "cluster";
 
 @Entity("item_pedido")
 export class ItemPedido {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => Pedido, (pedido) => pedido.itens)
+  @ManyToOne(() => Pedido, (pedido) => pedido.itens, { onDelete: "CASCADE" })
   pedido!: Pedido;
 
   @ManyToOne(() => Produto)

@@ -180,6 +180,40 @@ export class Produtos {
     };
   }
 
+  private calcularStatusEstoque(
+    atual: number,
+    minimo: number,
+    maximo: number | null
+  ): 'critico' | 'atencao' | 'estavel' {
+    const maxRef = maximo !== null && maximo > 0 ? maximo : minimo;
+    const media = (minimo + maxRef) / 2;
+    const limiteAtencao = 0.5 * media;
+
+    if (minimo > 0 && atual <= minimo * 1.2) {
+      return 'critico';
+    }
+
+    if (atual < limiteAtencao) {
+      return 'atencao';
+    }
+
+    return 'estavel';
+  }
+
+  getClasseEstoque(produto: Produto): 'estoque-ok' | 'estoque-atencao' | 'estoque-critico' {
+    const estoqueAtual = Number(produto.estoque_atual ?? 0);
+    const estoqueMinimo = Number(produto.estoque_minimo ?? 0);
+    const estoqueMaximo =
+      produto.estoque_maximo === null || produto.estoque_maximo === undefined
+        ? null
+        : Number(produto.estoque_maximo);
+    const status = this.calcularStatusEstoque(estoqueAtual, estoqueMinimo, estoqueMaximo);
+
+    if (status === 'critico') return 'estoque-critico';
+    if (status === 'atencao') return 'estoque-atencao';
+    return 'estoque-ok';
+  }
+
   async carregarCategorias() {
     try {
       const response = await firstValueFrom(this.http.get<any[]>(`${API_URL}/categorias`));

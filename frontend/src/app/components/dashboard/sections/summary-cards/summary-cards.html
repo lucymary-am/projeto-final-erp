@@ -1,49 +1,54 @@
-<div class="dashboard-grid">
-  <div class="card">
-    <div class="card-header">
-      <h3>Total de Vendas</h3>
-    </div>
-    @if (loading) {
-      <div class="card-value card-value--muted">…</div>
-    } @else {
-      <div class="card-value">{{ resumo?.vendasMesAtual ?? 0 | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
-    }
-    <p class="card-subtitle">Pedidos pagos neste mês</p>
-  </div>
+<section class="summary-layout" aria-label="Resumo">
+  <div class="summary-top">
+    <div class="card card--hero">
+      <div class="card-header card-header--hero">
+        <h3>Total de Vendas</h3>
+      </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h3>Produtos</h3>
-    </div>
-    @if (loading) {
-      <div class="card-value card-value--muted">…</div>
-    } @else {
-      <div class="card-value">{{ resumo?.produtosAtivos ?? 0 }}</div>
-    }
-    <p class="card-subtitle">Ativos no catálogo</p>
-  </div>
+      <div class="hero-body">
+        <div class="hero-chart" aria-hidden="true">
+          @if (loading) {
+            <div class="hero-chart-skeleton"></div>
+          } @else {
+            <canvas #vendasLineChart></canvas>
+          }
+        </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h3>Clientes</h3>
+        <div class="hero-meta">
+          <p class="card-subtitle">Pedidos pagos neste mês</p>
+          @if (loading) {
+            <div class="card-value card-value--muted card-value--hero">…</div>
+          } @else {
+            <div class="card-value card-value--hero">{{ resumo?.vendasMesAtual ?? 0 | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+          }
+        </div>
+      </div>
     </div>
-    @if (loading) {
-      <div class="card-value card-value--muted">…</div>
-    } @else {
-      <div class="card-value">{{ resumo?.totalClientes ?? 0 }}</div>
-    }
-    <p class="card-subtitle">Cadastrados</p>
-  </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h3>Crescimento</h3>
+    <div class="summary-stack">
+      <div class="card card--medium">
+        <div class="card-header">
+          <h3>Produtos</h3>
+        </div>
+        @if (loading) {
+          <div class="card-value card-value--muted">…</div>
+        } @else {
+          <div class="card-value">{{ resumo?.produtosAtivos ?? 0 }}</div>
+        }
+        <p class="card-subtitle">Ativos no catálogo</p>
+      </div>
+
+      <div class="card card--medium">
+        <div class="card-header">
+          <h3>Crescimento</h3>
+        </div>
+        @if (loading) {
+          <div class="card-value card-value--muted">…</div>
+        } @else {
+          <div class="card-value">{{ formatCrescimento(resumo?.crescimentoPercentual) }}</div>
+        }
+        <p class="card-subtitle">Vendas vs. mês anterior</p>
+      </div>
     </div>
-    @if (loading) {
-      <div class="card-value card-value--muted">…</div>
-    } @else {
-      <div class="card-value">{{ formatCrescimento(resumo?.crescimentoPercentual) }}</div>
-    }
-    <p class="card-subtitle">Vendas vs. mês anterior</p>
   </div>
-</div>
+</section>

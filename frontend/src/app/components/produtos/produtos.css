@@ -295,16 +295,24 @@
 .estoque-badge {
   display: inline-block;
   padding: 4px 12px;
-  background: #e8f5e9;
-  color: #00a86b;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.estoque-badge.baixo {
+.estoque-badge.estoque-ok {
+  background: #e8f5e9;
+  color: #00a86b;
+}
+
+.estoque-badge.estoque-atencao {
   background: #fff3e0;
   color: #ff9800;
+}
+
+.estoque-badge.estoque-critico {
+  background: #ffebee;
+  color: #dc2626;
 }
 
 .acoes {
